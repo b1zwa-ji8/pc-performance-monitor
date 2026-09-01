@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}CPU — PC Monitor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><span class="page-title-icon">🔲</span> CPU</h1>
+        <p class="page-subtitle" id="cpuName">Loading processor info...</p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-row mb-20">
+    <div class="stat-item">
+        <div class="stat-value" id="cpuUsage">—%</div>
+        <div class="stat-label">Usage</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value" id="cpuFreq">— MHz</div>
+        <div class="stat-label">Frequency</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value" id="cpuCores">—</div>
+        <div class="stat-label">Cores</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value" id="cpuThreads">—</div>
+        <div class="stat-label">Threads</div>
+    </div>
+</div>
+
+<!-- Chart -->
+<div class="card mb-20">
+    <div class="card-header">
+        <span class="card-title">📈 CPU Usage Over Time</span>
+        <span class="status-badge normal" id="cpuStatusBadge"><span class="status-dot"></span> Normal</span>
+    </div>
+    <div class="chart-container large">
+        <canvas id="cpuChart"></canvas>
+    </div>
+</div>
+
+<!-- Per-core usage -->
+<div class="card mb-20">
+    <div class="card-header">
+        <span class="card-title">🔲 Per-Core Usage</span>
+    </div>
+    <div class="core-grid" id="coreGrid">
+        <!-- Filled by JS -->
+    </div>
+</div>
+
+<!-- History -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">📋 Historical Data</span>
+        <div class="tabs" id="cpuHistoryTabs">
+            <button class="tab active" data-range="1h">1H</button>
+            <button class="tab" data-range="6h">6H</button>
+            <button class="tab" data-range="24h">24H</button>
+            <button class="tab" data-range="7d">7D</button>
+        </div>
+    </div>
+    <div class="stats-row mb-16" id="cpuHistoryStats">
+        <div class="stat-item"><div class="stat-value" id="cpuAvg">—</div><div class="stat-label">Average</div></div>
+        <div class="stat-item"><div class="stat-value" id="cpuMin">—</div><div class="stat-label">Min</div></div>
+        <div class="stat-item"><div class="stat-value" id="cpuMax">—</div><div class="stat-label">Max</div></div>
+    </div>
+    <div class="chart-container">
+        <canvas id="cpuHistoryChart"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/cpu.js') }}"></script>
+{% endblock %}

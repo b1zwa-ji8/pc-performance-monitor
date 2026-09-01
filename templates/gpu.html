@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}GPU — PC Monitor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><span class="page-title-icon">🎮</span> GPU</h1>
+        <p class="page-subtitle" id="gpuName">Loading GPU info...</p>
+    </div>
+</div>
+
+<div id="gpuContent">
+    <div class="stats-row mb-20">
+        <div class="stat-item">
+            <div class="stat-value" id="gpuLoad">—%</div>
+            <div class="stat-label">GPU Load</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="gpuTemp">—°C</div>
+            <div class="stat-label">Temperature</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="gpuMemUsed">— GB</div>
+            <div class="stat-label">VRAM Used</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="gpuMemTotal">— GB</div>
+            <div class="stat-label">VRAM Total</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="gpuMemPercent">—%</div>
+            <div class="stat-label">VRAM Usage</div>
+        </div>
+    </div>
+
+    <div class="grid-2 mb-20">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">📈 GPU Usage</span>
+                <span class="status-badge normal" id="gpuStatusBadge"><span class="status-dot"></span> Normal</span>
+            </div>
+            <div class="chart-container large">
+                <canvas id="gpuChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">🔄 VRAM Usage</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;height:280px;">
+                <canvas id="gpuMemDoughnut" style="max-width:260px;max-height:260px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- History -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">📋 Historical Data</span>
+            <div class="tabs" id="gpuHistoryTabs">
+                <button class="tab active" data-range="1h">1H</button>
+                <button class="tab" data-range="6h">6H</button>
+                <button class="tab" data-range="24h">24H</button>
+                <button class="tab" data-range="7d">7D</button>
+            </div>
+        </div>
+        <div class="stats-row mb-16">
+            <div class="stat-item"><div class="stat-value" id="gpuAvg">—</div><div class="stat-label">Average</div></div>
+            <div class="stat-item"><div class="stat-value" id="gpuMin">—</div><div class="stat-label">Min</div></div>
+            <div class="stat-item"><div class="stat-value" id="gpuMax">—</div><div class="stat-label">Max</div></div>
+        </div>
+        <div class="chart-container">
+            <canvas id="gpuHistoryChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div id="gpuUnavailable" class="hidden">
+    <div class="card">
+        <div class="empty-state">
+            <div class="empty-state-icon">🎮</div>
+            <div class="empty-state-text">GPU information unavailable</div>
+            <p style="color:var(--text-muted);font-size:0.85rem;margin-top:8px;">
+                GPU monitoring requires an NVIDIA GPU with drivers installed.<br>
+                AMD and Intel integrated GPUs are not currently supported.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/gpu.js') }}"></script>
+{% endblock %}

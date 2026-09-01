@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Processes — PC Monitor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><span class="page-title-icon">⚙️</span> Processes</h1>
+        <p class="page-subtitle">Running processes (<span id="processTotal">0</span> total)</p>
+    </div>
+    <div class="flex gap-12">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="form-input" id="processSearch" placeholder="Search processes...">
+        </div>
+        <button class="btn btn-secondary" id="refreshProcesses">🔄 Refresh</button>
+    </div>
+</div>
+
+<!-- Sort tabs -->
+<div class="tabs mb-16" id="processSortTabs">
+    <button class="tab active" data-sort="cpu">CPU ↓</button>
+    <button class="tab" data-sort="memory">Memory ↓</button>
+    <button class="tab" data-sort="name">Name ↑</button>
+    <button class="tab" data-sort="pid">PID ↑</button>
+</div>
+
+<div class="card">
+    <div class="table-container">
+        <table class="data-table" id="processTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>PID</th>
+                    <th>CPU %</th>
+                    <th>Memory %</th>
+                    <th>Memory</th>
+                    <th>Status</th>
+                    <th>User</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="processBody">
+                <tr><td colspan="8" class="text-center" style="padding:40px;color:var(--text-muted);">Loading processes...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/processes.js') }}"></script>
+{% endblock %}

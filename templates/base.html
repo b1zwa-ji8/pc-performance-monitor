@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PC Monitor{% endblock %}</title>
+    <meta name="description" content="Personal PC Performance Monitor — Real-time system metrics dashboard">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Mobile Top Bar -->
+        <div class="mobile-topbar">
+            <button class="menu-btn" id="menuBtn" aria-label="Toggle menu">☰</button>
+            <span style="font-weight:700;font-size:1rem;">PC Monitor</span>
+            <button class="menu-btn" id="themeToggleMobile" aria-label="Toggle theme">🌙</button>
+        </div>
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">⚡</div>
+                <div>
+                    <div class="sidebar-title">PC Monitor</div>
+                    <div class="sidebar-subtitle">Performance Dashboard</div>
+                </div>
+            </div>
+
+            <div class="sidebar-nav">
+                <div class="nav-section-label">Dashboard</div>
+                <a href="/" class="nav-link {% if page == 'overview' %}active{% endif %}">
+                    <span class="nav-icon">📊</span> Overview
+                </a>
+
+                <div class="nav-section-label">Hardware</div>
+                <a href="/cpu" class="nav-link {% if page == 'cpu' %}active{% endif %}">
+                    <span class="nav-icon">🔲</span> CPU
+                </a>
+                <a href="/memory" class="nav-link {% if page == 'memory' %}active{% endif %}">
+                    <span class="nav-icon">💾</span> Memory
+                </a>
+                <a href="/disk" class="nav-link {% if page == 'disk' %}active{% endif %}">
+                    <span class="nav-icon">💿</span> Disk
+                </a>
+                <a href="/network" class="nav-link {% if page == 'network' %}active{% endif %}">
+                    <span class="nav-icon">🌐</span> Network
+                </a>
+                <a href="/gpu" class="nav-link {% if page == 'gpu' %}active{% endif %}">
+                    <span class="nav-icon">🎮</span> GPU
+                </a>
+
+                <div class="nav-section-label">System</div>
+                <a href="/processes" class="nav-link {% if page == 'processes' %}active{% endif %}">
+                    <span class="nav-icon">⚙️</span> Processes
+                </a>
+                <a href="/settings" class="nav-link {% if page == 'settings' %}active{% endif %}">
+                    <span class="nav-icon">🔧</span> Settings
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="nav-link" id="themeToggle" style="cursor:pointer;">
+                    <span class="nav-icon" id="themeIcon">🌙</span>
+                    <span id="themeLabel">Dark Mode</span>
+                </div>
+                <div style="padding:8px 14px; font-size:0.7rem; color:var(--text-muted);">
+                    <span id="alertIndicator" style="position:relative; cursor:pointer;" data-tooltip="View alerts">
+                        🔔 <span id="alertCount" class="hidden"></span>
+                    </span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Alert area -->
+            <div id="alertArea"></div>
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Kill Process Modal -->
+    <div class="modal-overlay" id="killModal">
+        <div class="modal">
+            <div class="modal-title">⚠️ Terminate Process</div>
+            <div class="modal-text" id="killModalText">Are you sure you want to terminate this process?</div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="killCancel">Cancel</button>
+                <button class="btn btn-danger" id="killConfirm">Terminate</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

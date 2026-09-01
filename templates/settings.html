@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Settings — PC Monitor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><span class="page-title-icon">🔧</span> Settings</h1>
+        <p class="page-subtitle">Configure monitoring preferences</p>
+    </div>
+</div>
+
+<div class="grid-2">
+    <!-- General Settings -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">⚙️ General</span>
+        </div>
+        <div class="setting-row">
+            <div class="setting-info">
+                <div class="setting-name">Refresh Interval</div>
+                <div class="setting-desc">How often metrics are updated (1–30 seconds)</div>
+            </div>
+            <div class="setting-control">
+                <input type="number" class="form-input" id="settingRefreshInterval" min="1" max="30" value="2">
+            </div>
+        </div>
+        <div class="setting-row">
+            <div class="setting-info">
+                <div class="setting-name">Theme</div>
+                <div class="setting-desc">Switch between dark and light mode</div>
+            </div>
+            <div class="setting-control">
+                <select class="form-select" id="settingTheme">
+                    <option value="dark">Dark</option>
+                    <option value="light">Light</option>
+                </select>
+            </div>
+        </div>
+        <div class="setting-row">
+            <div class="setting-info">
+                <div class="setting-name">History Collection</div>
+                <div class="setting-desc">Store performance data in local database</div>
+            </div>
+            <div class="setting-control">
+                <label class="toggle">
+                    <input type="checkbox" id="settingHistory" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+        <div class="setting-row">
+            <div class="setting-info">
+                <div class="setting-name">Alerts</div>
+                <div class="setting-desc">Enable performance alerts and warnings</div>
+            </div>
+            <div class="setting-control">
+                <label class="toggle">
+                    <input type="checkbox" id="settingAlerts" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+        <div class="setting-row">
+            <div class="setting-info">
+                <div class="setting-name">History Retention</div>
+                <div class="setting-desc">Days to keep historical data (1–365)</div>
+            </div>
+            <div class="setting-control">
+                <input type="number" class="form-input" id="settingRetention" min="1" max="365" value="30">
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Thresholds -->
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">🔔 Alert Thresholds</span>
+        </div>
+        <div class="setting-row">
+            <div class="setting-info">
+                <div class="setting-name">CPU Warning</div>
+                <div class="setting-desc">Alert when CPU exceeds this % for 10 seconds</div>
+            </div>
+            <div class="setting-control">
+                <input type="number" class="form-input" id="settingCpuWarning" min="50" max="100" value="90">
+            </div>
+        </div>
+        <div class="setting-row">
+            <div class="setting-info">
+                <div class="setting-name">RAM Warning</div>
+                <div class="setting-desc">Alert when RAM usage exceeds this %</div>
+            </div>
+            <div class="setting-control">
+                <input type="number" class="form-input" id="settingRamWarning" min="50" max="100" value="90">
+            </div>
+        </div>
+        <div class="setting-row">
+            <div class="setting-info">
+                <div class="setting-name">Disk Warning</div>
+                <div class="setting-desc">Alert when any disk exceeds this %</div>
+            </div>
+            <div class="setting-control">
+                <input type="number" class="form-input" id="settingDiskWarning" min="50" max="100" value="90">
+            </div>
+        </div>
+        <div class="setting-row">
+            <div class="setting-info">
+                <div class="setting-name">GPU Temp Warning</div>
+                <div class="setting-desc">Alert when GPU temp exceeds this °C</div>
+            </div>
+            <div class="setting-control">
+                <input type="number" class="form-input" id="settingGpuTemp" min="50" max="120" value="85">
+            </div>
+        </div>
+        <div class="setting-row">
+            <div class="setting-info">
+                <div class="setting-name">Battery Warning</div>
+                <div class="setting-desc">Alert when battery drops below this %</div>
+            </div>
+            <div class="setting-control">
+                <input type="number" class="form-input" id="settingBatteryWarning" min="5" max="50" value="20">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions -->
+<div class="card mt-20">
+    <div class="card-header">
+        <span class="card-title">🗑️ Data Management</span>
+    </div>
+    <div class="flex gap-12 items-center" style="flex-wrap:wrap;">
+        <button class="btn btn-primary" id="saveSettings">💾 Save Settings</button>
+        <button class="btn btn-danger" id="deleteHistory">🗑️ Delete All History</button>
+    </div>
+    <p style="margin-top:12px;font-size:0.78rem;color:var(--text-muted);">
+        Deleting history will permanently remove all stored performance data from the local database.
+    </p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/settings.js') }}"></script>
+{% endblock %}

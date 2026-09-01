@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Network — PC Monitor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><span class="page-title-icon">🌐</span> Network</h1>
+        <p class="page-subtitle">Upload and download activity</p>
+    </div>
+</div>
+
+<div class="stats-row mb-20">
+    <div class="stat-item">
+        <div class="stat-value" id="netUpSpeed" style="color:var(--accent-green);">—</div>
+        <div class="stat-label">Upload</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value" id="netDownSpeed" style="color:var(--accent-blue);">—</div>
+        <div class="stat-label">Download</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value" id="netConnections">—</div>
+        <div class="stat-label">Connections</div>
+    </div>
+</div>
+
+<div class="card mb-20">
+    <div class="card-header">
+        <span class="card-title">📈 Network Activity</span>
+    </div>
+    <div class="chart-container large">
+        <canvas id="netChart"></canvas>
+    </div>
+</div>
+
+<!-- History -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">📋 Historical Data</span>
+        <div class="tabs" id="netHistoryTabs">
+            <button class="tab active" data-range="1h">1H</button>
+            <button class="tab" data-range="6h">6H</button>
+            <button class="tab" data-range="24h">24H</button>
+            <button class="tab" data-range="7d">7D</button>
+        </div>
+    </div>
+    <div class="stats-row mb-16">
+        <div class="stat-item"><div class="stat-value" id="netAvg">—</div><div class="stat-label">Avg Download</div></div>
+        <div class="stat-item"><div class="stat-value" id="netMin">—</div><div class="stat-label">Min</div></div>
+        <div class="stat-item"><div class="stat-value" id="netMax">—</div><div class="stat-label">Max</div></div>
+    </div>
+    <div class="chart-container">
+        <canvas id="netHistoryChart"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/network.js') }}"></script>
+{% endblock %}

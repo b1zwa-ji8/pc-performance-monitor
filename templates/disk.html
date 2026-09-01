@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Disk — PC Monitor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><span class="page-title-icon">💿</span> Disk</h1>
+        <p class="page-subtitle">Storage and I/O activity</p>
+    </div>
+</div>
+
+<!-- I/O Stats -->
+<div class="stats-row mb-20">
+    <div class="stat-item">
+        <div class="stat-value" id="diskRead" style="color:var(--accent-green);">—</div>
+        <div class="stat-label">Read Speed</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value" id="diskWrite" style="color:var(--accent-orange);">—</div>
+        <div class="stat-label">Write Speed</div>
+    </div>
+</div>
+
+<!-- I/O Chart -->
+<div class="card mb-20">
+    <div class="card-header">
+        <span class="card-title">📈 Disk I/O Activity</span>
+    </div>
+    <div class="chart-container">
+        <canvas id="diskIOChart"></canvas>
+    </div>
+</div>
+
+<!-- Partitions -->
+<div class="card mb-20">
+    <div class="card-header">
+        <span class="card-title">💿 Partitions</span>
+    </div>
+    <div class="grid-2" id="partitionGrid">
+        <!-- Filled by JS -->
+    </div>
+</div>
+
+<!-- Directory Analyzer -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">🔍 Storage Analyzer</span>
+    </div>
+    <div class="flex gap-12 mb-16">
+        <div class="search-box" style="flex:1;max-width:400px;">
+            <span class="search-icon">📂</span>
+            <input type="text" class="form-input" id="analyzePath" placeholder="Enter path (e.g., C:\)" value="C:\">
+        </div>
+        <button class="btn btn-primary" id="analyzeBtn">Analyze</button>
+    </div>
+    <div id="analyzerResults">
+        <div class="empty-state">
+            <div class="empty-state-icon">🔍</div>
+            <div class="empty-state-text">Enter a path and click Analyze to scan for large files and folders</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/disk.js') }}"></script>
+{% endblock %}

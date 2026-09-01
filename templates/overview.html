@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Overview — PC Monitor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><span class="page-title-icon">📊</span> Overview</h1>
+        <p class="page-subtitle">System performance at a glance</p>
+    </div>
+    <div id="systemUptime" class="flex items-center gap-8" style="font-size:0.85rem;color:var(--text-secondary);">
+        ⏱️ Uptime: <strong id="uptimeValue" style="color:var(--text-primary)">—</strong>
+    </div>
+</div>
+
+<!-- System info bar -->
+<div class="info-bar" id="systemInfoBar">
+    <div class="info-item">🖥️ <strong id="infoHostname">—</strong></div>
+    <div class="info-item">💻 <strong id="infoOS">—</strong></div>
+    <div class="info-item">⚙️ Processes: <strong id="infoProcessCount">—</strong></div>
+</div>
+
+<!-- Metric cards -->
+<div class="metric-grid" id="metricGrid">
+    <!-- CPU Card -->
+    <div class="metric-card blue" onclick="location.href='/cpu'">
+        <div class="metric-card-header">
+            <div class="metric-card-icon">🔲</div>
+            <span class="metric-card-label">CPU</span>
+        </div>
+        <div class="metric-card-value" id="cpuValue">—<span class="unit">%</span></div>
+        <div class="metric-card-detail" id="cpuDetail">Loading...</div>
+        <div class="metric-card-footer">
+            <div class="progress-bar"><div class="progress-fill blue" id="cpuBar" style="width:0%"></div></div>
+        </div>
+        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+            <span class="trend stable" id="cpuTrend">— stable</span>
+            <span class="status-badge normal" id="cpuStatus"><span class="status-dot"></span> Normal</span>
+        </div>
+    </div>
+
+    <!-- RAM Card -->
+    <div class="metric-card green" onclick="location.href='/memory'">
+        <div class="metric-card-header">
+            <div class="metric-card-icon">💾</div>
+            <span class="metric-card-label">Memory</span>
+        </div>
+        <div class="metric-card-value" id="ramValue">—<span class="unit">%</span></div>
+        <div class="metric-card-detail" id="ramDetail">Loading...</div>
+        <div class="metric-card-footer">
+            <div class="progress-bar"><div class="progress-fill green" id="ramBar" style="width:0%"></div></div>
+        </div>
+        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+            <span class="trend stable" id="ramTrend">— stable</span>
+            <span class="status-badge normal" id="ramStatus"><span class="status-dot"></span> Normal</span>
+        </div>
+    </div>
+
+    <!-- GPU Card -->
+    <div class="metric-card purple" onclick="location.href='/gpu'">
+        <div class="metric-card-header">
+            <div class="metric-card-icon">🎮</div>
+            <span class="metric-card-label">GPU</span>
+        </div>
+        <div class="metric-card-value" id="gpuValue">—<span class="unit">%</span></div>
+        <div class="metric-card-detail" id="gpuDetail">Loading...</div>
+        <div class="metric-card-footer">
+            <div class="progress-bar"><div class="progress-fill purple" id="gpuBar" style="width:0%"></div></div>
+        </div>
+        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+            <span class="trend stable" id="gpuTrend">— stable</span>
+            <span class="status-badge normal" id="gpuStatus"><span class="status-dot"></span> Normal</span>
+        </div>
+    </div>
+
+    <!-- Disk Card -->
+    <div class="metric-card orange" onclick="location.href='/disk'">
+        <div class="metric-card-header">
+            <div class="metric-card-icon">💿</div>
+            <span class="metric-card-label">Disk</span>
+        </div>
+        <div class="metric-card-value" id="diskValue">—<span class="unit">%</span></div>
+        <div class="metric-card-detail" id="diskDetail">Loading...</div>
+        <div class="metric-card-footer">
+            <div class="progress-bar"><div class="progress-fill orange" id="diskBar" style="width:0%"></div></div>
+        </div>
+        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+            <span class="trend stable" id="diskTrend">— stable</span>
+            <span class="status-badge normal" id="diskStatus"><span class="status-dot"></span> Normal</span>
+        </div>
+    </div>
+
+    <!-- Network Card -->
+    <div class="metric-card cyan" onclick="location.href='/network'">
+        <div class="metric-card-header">
+            <div class="metric-card-icon">🌐</div>
+            <span class="metric-card-label">Network</span>
+        </div>
+        <div class="metric-card-value" id="netValue" style="font-size:1.3rem;">—</div>
+        <div class="metric-card-detail" id="netDetail">Loading...</div>
+        <div class="metric-card-footer">
+            <div style="display:flex;gap:16px;font-size:0.78rem;width:100%;">
+                <span style="color:var(--accent-green);">↑ <span id="netUpload">0 B/s</span></span>
+                <span style="color:var(--accent-blue);">↓ <span id="netDownload">0 B/s</span></span>
+            </div>
+        </div>
+        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+            <span class="trend stable" id="netTrend">— stable</span>
+            <span class="status-badge normal" id="netStatus"><span class="status-dot"></span> Active</span>
+        </div>
+    </div>
+
+    <!-- Battery Card -->
+    <div class="metric-card red" id="batteryCard">
+        <div class="metric-card-header">
+            <div class="metric-card-icon">🔋</div>
+            <span class="metric-card-label">Battery</span>
+        </div>
+        <div class="metric-card-value" id="batValue">—<span class="unit">%</span></div>
+        <div class="metric-card-detail" id="batDetail">Loading...</div>
+        <div class="metric-card-footer">
+            <div class="progress-bar"><div class="progress-fill green" id="batBar" style="width:0%"></div></div>
+        </div>
+        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
+            <span class="trend stable" id="batTrend">—</span>
+            <span class="status-badge normal" id="batStatus"><span class="status-dot"></span> Normal</span>
+        </div>
+    </div>
+</div>
+
+<!-- Live Charts -->
+<div class="grid-2 mb-20">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">📈 CPU Usage</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="overviewCpuChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">📈 Memory Usage</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="overviewMemChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">📈 Network Activity</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="overviewNetChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">📈 Disk I/O</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="overviewDiskChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/overview.js') }}"></script>
+{% endblock %}

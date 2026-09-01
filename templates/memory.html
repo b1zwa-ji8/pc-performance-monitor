@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Memory — PC Monitor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><span class="page-title-icon">💾</span> Memory</h1>
+        <p class="page-subtitle">RAM and swap usage</p>
+    </div>
+</div>
+
+<div class="stats-row mb-20">
+    <div class="stat-item">
+        <div class="stat-value" id="memPercent">—%</div>
+        <div class="stat-label">Usage</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value" id="memUsed">— GB</div>
+        <div class="stat-label">Used</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value" id="memAvailable">— GB</div>
+        <div class="stat-label">Available</div>
+    </div>
+    <div class="stat-item">
+        <div class="stat-value" id="memTotal">— GB</div>
+        <div class="stat-label">Total</div>
+    </div>
+</div>
+
+<div class="grid-2 mb-20">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">📈 RAM Usage Over Time</span>
+            <span class="status-badge normal" id="memStatusBadge"><span class="status-dot"></span> Normal</span>
+        </div>
+        <div class="chart-container large">
+            <canvas id="memChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">🔄 Memory Composition</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;height:280px;">
+            <canvas id="memDoughnut" style="max-width:260px;max-height:260px;"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Swap -->
+<div class="card mb-20">
+    <div class="card-header">
+        <span class="card-title">💿 Swap Memory</span>
+    </div>
+    <div class="stats-row">
+        <div class="stat-item">
+            <div class="stat-value" id="swapPercent">—%</div>
+            <div class="stat-label">Usage</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="swapUsed">— GB</div>
+            <div class="stat-label">Used</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="swapFree">— GB</div>
+            <div class="stat-label">Free</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="swapTotal">— GB</div>
+            <div class="stat-label">Total</div>
+        </div>
+    </div>
+</div>
+
+<!-- History -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">📋 Historical Data</span>
+        <div class="tabs" id="memHistoryTabs">
+            <button class="tab active" data-range="1h">1H</button>
+            <button class="tab" data-range="6h">6H</button>
+            <button class="tab" data-range="24h">24H</button>
+            <button class="tab" data-range="7d">7D</button>
+        </div>
+    </div>
+    <div class="stats-row mb-16">
+        <div class="stat-item"><div class="stat-value" id="memAvg">—</div><div class="stat-label">Average</div></div>
+        <div class="stat-item"><div class="stat-value" id="memMin">—</div><div class="stat-label">Min</div></div>
+        <div class="stat-item"><div class="stat-value" id="memMax">—</div><div class="stat-label">Max</div></div>
+    </div>
+    <div class="chart-container">
+        <canvas id="memHistoryChart"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/memory.js') }}"></script>
+{% endblock %}
