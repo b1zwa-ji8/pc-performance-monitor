@@ -1,0 +1,632 @@
+/* ==========================================================================
+   Network Speed Test Stylesheet — Dark Obsidian Theme
+   Matching PC Performance Monitor Design System
+   ========================================================================== */
+
+.speedtest-page-container {
+    padding: 24px 32px 64px;
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+/* Page Header Block */
+.page-header-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.header-breadcrumbs {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-on-dark-muted, #94A3B8);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-breadcrumbs a {
+    color: var(--text-on-dark-muted, #94A3B8);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.header-breadcrumbs a:hover {
+    color: var(--accent-primary, #4E88FF);
+}
+
+.header-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.page-main-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-on-dark, #F8FAFC);
+    letter-spacing: -0.02em;
+    margin: 0 0 6px 0;
+}
+
+.page-main-sub {
+    font-size: 0.92rem;
+    color: var(--text-on-dark-muted, #94A3B8);
+    max-width: 720px;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.header-badge-cluster {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.engine-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid var(--border-dark, #30363D);
+    border-radius: 9999px;
+    font-size: 0.82rem;
+    color: var(--text-on-dark, #F8FAFC);
+    font-weight: 500;
+}
+
+.engine-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.cooldown-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 9999px;
+    font-size: 0.82rem;
+    color: #FBBF24;
+    font-weight: 600;
+}
+
+.cooldown-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #FBBF24;
+    animation: cooldownPulse 1s infinite alternate;
+}
+
+@keyframes cooldownPulse {
+    0% { opacity: 0.4; }
+    100% { opacity: 1; }
+}
+
+/* Speed Console Hero Card */
+.speed-console-card {
+    position: relative;
+    background: var(--bg-card, #161B22);
+    border: 1px solid var(--border-dark, #30363D);
+    border-radius: 16px;
+    padding: 32px;
+    overflow: hidden;
+    box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.45);
+}
+
+.console-ambient-glow {
+    position: absolute;
+    top: -120px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(78, 136, 255, 0.12) 0%, rgba(104, 211, 145, 0.05) 50%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.console-body {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+}
+
+/* Stage Status Banner */
+.stage-banner {
+    width: 100%;
+    max-width: 680px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid var(--border-dark, #30363D);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 16px;
+    row-gap: 12px;
+    align-items: center;
+}
+
+.stage-pulse-icon {
+    grid-row: 1;
+    grid-column: 1;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent-primary, #4E88FF);
+    box-shadow: 0 0 10px rgba(78, 136, 255, 0.6);
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stage-pulse-icon.testing {
+    animation: stagePulse 1s infinite alternate;
+    background: #38BDF8;
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.8);
+}
+
+.stage-pulse-icon.complete {
+    background: #10B981;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.8);
+}
+
+.stage-pulse-icon.error {
+    background: #EF4444;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.8);
+}
+
+@keyframes stagePulse {
+    0% { transform: scale(0.9); opacity: 0.6; }
+    100% { transform: scale(1.2); opacity: 1; }
+}
+
+.stage-text-block {
+    grid-row: 1;
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.stage-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-on-dark, #F8FAFC);
+    letter-spacing: 0.01em;
+}
+
+.stage-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-on-dark-muted, #94A3B8);
+}
+
+.stage-progress-bar-container {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    height: 4px;
+    background: rgba(30, 41, 59, 0.8);
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.stage-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4E88FF, #38BDF8, #68D391);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Gauge Centerpiece */
+.gauge-centerpiece {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+
+.gauge-svg-wrap {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.speed-radial-svg {
+    transform: rotate(0deg);
+}
+
+.gauge-track {
+    transition: stroke 0.3s ease;
+}
+
+.gauge-progress {
+    transition: stroke-dashoffset 0.25s cubic-bezier(0.1, 0.7, 0.1, 1);
+}
+
+.gauge-phase-tag {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    fill: var(--text-on-dark-muted, #94A3B8);
+    text-transform: uppercase;
+}
+
+.gauge-digital-val {
+    font-size: 44px;
+    font-weight: 800;
+    fill: var(--text-on-dark, #F8FAFC);
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+}
+
+.gauge-unit-tag {
+    font-size: 13px;
+    font-weight: 600;
+    fill: #38BDF8;
+    letter-spacing: 0.05em;
+}
+
+/* Action Shelf */
+.console-action-shelf {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.run-test-btn {
+    padding: 12px 32px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+    border: 1px solid rgba(147, 197, 253, 0.3);
+    color: #FFFFFF;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.run-test-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #60A5FA 0%, #2563EB 100%);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+    transform: translateY(-1px);
+}
+
+.run-test-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #1E293B;
+    border-color: #334155;
+    color: #64748B;
+    box-shadow: none;
+    transform: none;
+}
+
+.cooldown-helper {
+    font-size: 0.78rem;
+    color: var(--text-on-dark-muted, #94A3B8);
+    text-align: center;
+}
+
+/* Speed Metrics Grid */
+.speed-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    width: 100%;
+}
+
+.speed-card {
+    position: relative;
+    background: rgba(22, 27, 34, 0.85);
+    border: 1px solid var(--border-dark, #30363D);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.speed-card:hover {
+    transform: translateY(-2px);
+    border-color: #484F58;
+}
+
+.card-accent-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+}
+
+.ping-bar { background: #ECC94B; }
+.dl-bar { background: #4E88FF; }
+.ul-bar { background: #68D391; }
+.srv-bar { background: #A855F7; }
+
+.speed-metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.speed-metric-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-on-dark-muted, #94A3B8);
+}
+
+.speed-metric-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.speed-metric-num {
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: var(--text-on-dark, #F8FAFC);
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+}
+
+.speed-metric-unit {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-on-dark-muted, #94A3B8);
+}
+
+.speed-metric-sub {
+    font-size: 0.78rem;
+    color: #64748B;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.server-node-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-height: 44px;
+    justify-content: center;
+}
+
+.server-name-label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-on-dark, #F8FAFC);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.server-isp-label {
+    font-size: 0.82rem;
+    color: #94A3B8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* History Chart Section */
+.speed-history-section,
+.speed-table-section {
+    width: 100%;
+}
+
+.section-card {
+    background: var(--bg-card, #161B22);
+    border: 1px solid var(--border-dark, #30363D);
+    border-radius: 14px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.section-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.section-card-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-on-dark, #F8FAFC);
+    margin: 0 0 4px 0;
+}
+
+.section-card-sub {
+    font-size: 0.82rem;
+    color: var(--text-on-dark-muted, #94A3B8);
+    margin: 0;
+}
+
+.chart-legend-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.legend-item {
+    font-size: 0.8rem;
+    color: var(--text-on-dark-muted, #94A3B8);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+
+.dl-color { background: #4E88FF; }
+.ul-color { background: #68D391; }
+
+.svg-chart-container {
+    position: relative;
+    width: 100%;
+    height: 240px;
+    background: rgba(11, 14, 20, 0.6);
+    border: 1px solid rgba(48, 54, 61, 0.5);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.history-svg-chart {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.chart-empty-state {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: var(--text-on-dark-muted, #94A3B8);
+    text-align: center;
+    padding: 20px;
+}
+
+/* History Table Section */
+.table-count-badge {
+    font-size: 0.78rem;
+    font-weight: 600;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid var(--border-dark, #30363D);
+    border-radius: 9999px;
+    padding: 4px 10px;
+    color: var(--text-on-dark-muted, #94A3B8);
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.editorial-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    text-align: left;
+}
+
+.editorial-table th {
+    background: rgba(22, 27, 34, 0.9);
+    color: var(--text-on-dark-muted, #94A3B8);
+    font-weight: 600;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-dark, #30363D);
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.editorial-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+    color: var(--text-on-dark, #F8FAFC);
+    white-space: nowrap;
+}
+
+.editorial-table tr:hover td {
+    background: rgba(30, 41, 59, 0.35);
+}
+
+.table-empty-cell {
+    text-align: center;
+    color: var(--text-on-dark-muted, #94A3B8);
+    padding: 32px 16px;
+}
+
+.table-status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-completed {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34D399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-fallback {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38BDF8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.status-failed {
+    background: rgba(239, 68, 68, 0.15);
+    color: #F87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1100px) {
+    .speed-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 680px) {
+    .speedtest-page-container {
+        padding: 16px;
+        gap: 20px;
+    }
+    .header-title-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .speed-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    .gauge-svg-wrap {
+        width: 240px;
+        height: 240px;
+    }
+    .speed-radial-svg {
+        width: 240px;
+        height: 240px;
+    }
+    .gauge-digital-val {
+        font-size: 36px;
+    }
+}

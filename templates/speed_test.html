@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Network Speed Test — PC Performance Monitor{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/speed-test.css') }}">
+
+<div class="speedtest-page-container">
+    <!-- Breadcrumb & Header -->
+    <header class="page-header-block">
+        <div class="header-breadcrumbs">
+            <a href="/">Overview</a> &bull; <a href="/network">Network</a> &bull; <span>Speed Test</span>
+        </div>
+        <div class="header-title-row">
+            <div>
+                <h1 class="page-main-title">Network Speed &amp; Latency Engine</h1>
+                <p class="page-main-sub">
+                    Real-time local bandwidth testing via Ookla speedtest-cli with edge CDN fallback probes. Zero canvas, pure SVG rendering.
+                </p>
+            </div>
+            <div class="header-badge-cluster">
+                <span class="cooldown-pill" id="cooldownPill" style="display: none;">
+                    <span class="cooldown-dot"></span>
+                    <span id="cooldownLabel">Cooldown: 30s</span>
+                </span>
+                <span class="engine-badge">
+                    <span class="engine-status-dot" id="engineStatusDot"></span>
+                    <span id="engineStatusText">Service Ready</span>
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Speed Test Console Card -->
+    <section class="speed-console-card">
+        <div class="console-ambient-glow"></div>
+        <div class="console-body">
+            <!-- Stage Status Indicator -->
+            <div class="stage-banner" id="stageBanner">
+                <div class="stage-pulse-icon" id="stagePulseIcon"></div>
+                <div class="stage-text-block">
+                    <div class="stage-title" id="stageTitle">Ready to Test</div>
+                    <div class="stage-subtitle" id="stageSubtitle">Click "Run Speed Test" to begin latency and throughput analysis</div>
+                </div>
+                <div class="stage-progress-bar-container">
+                    <div class="stage-progress-bar" id="stageProgressBar" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- Central Radial Gauge Container -->
+            <div class="gauge-centerpiece">
+                <div class="gauge-svg-wrap">
+                    <svg class="speed-radial-svg" viewBox="0 0 280 280" width="280" height="280" id="speedGaugeSvg">
+                        <defs>
+                            <linearGradient id="speedGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#4E88FF" />
+                                <stop offset="50%" stop-color="#38BDF8" />
+                                <stop offset="100%" stop-color="#68D391" />
+                            </linearGradient>
+                            <linearGradient id="gaugeTrackGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#1E242C" />
+                                <stop offset="100%" stop-color="#28303C" />
+                            </linearGradient>
+                            <filter id="gaugeGlow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feGaussianBlur stdDeviation="6" result="blur" />
+                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                            </filter>
+                        </defs>
+
+                        <!-- Background Track (Arc from 135 deg to 405 deg = 270 deg) -->
+                        <circle
+                            class="gauge-track"
+                            cx="140"
+                            cy="140"
+                            r="110"
+                            fill="none"
+                            stroke="url(#gaugeTrackGradient)"
+                            stroke-width="14"
+                            stroke-linecap="round"
+                            stroke-dasharray="518.36 691.15"
+                            stroke-dashoffset="0"
+                            transform="rotate(135 140 140)"
+                        />
+
+                        <!-- Dynamic Active Progress Arc -->
+                        <circle
+                            class="gauge-progress"
+                            id="gaugeProgressCircle"
+                            cx="140"
+                            cy="140"
+                            r="110"
+                            fill="none"
+                            stroke="url(#speedGradient)"
+                            stroke-width="14"
+                            stroke-linecap="round"
+                            stroke-dasharray="518.36 691.15"
+                            stroke-dashoffset="518.36"
+                            transform="rotate(135 140 140)"
+                            filter="url(#gaugeGlow)"
+                        />
+
+                        <!-- Tick Marks for 0, 25, 50, 100, 200, 500+ -->
+                        <g class="gauge-ticks" opacity="0.4">
+                            <circle cx="62" cy="217" r="2.5" fill="#94A3B8" />
+                            <circle cx="30" cy="140" r="2.5" fill="#94A3B8" />
+                            <circle cx="62" cy="63" r="2.5" fill="#94A3B8" />
+                            <circle cx="140" cy="30" r="2.5" fill="#94A3B8" />
+                            <circle cx="218" cy="63" r="2.5" fill="#94A3B8" />
+                            <circle cx="250" cy="140" r="2.5" fill="#94A3B8" />
+                            <circle cx="218" cy="217" r="2.5" fill="#94A3B8" />
+                        </g>
+
+                        <!-- Center Digital Readout -->
+                        <g class="gauge-center-content">
+                            <text x="140" y="125" text-anchor="middle" class="gauge-phase-tag" id="gaugePhaseTag">STANDBY</text>
+                            <text x="140" y="165" text-anchor="middle" class="gauge-digital-val" id="gaugeDigitalVal">0.0</text>
+                            <text x="140" y="190" text-anchor="middle" class="gauge-unit-tag" id="gaugeUnitTag">Mbps</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- Run Speed Test Action Trigger -->
+                <div class="console-action-shelf">
+                    <button class="btn btn-primary run-test-btn" id="startSpeedTestBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        <span id="startBtnLabel">Run Speed Test</span>
+                    </button>
+                    <div class="cooldown-helper" id="cooldownHelper">30-second cooldown enforced between runs to protect bandwidth accuracy.</div>
+                </div>
+            </div>
+
+            <!-- Real-time Metric Cards -->
+            <div class="speed-metrics-grid">
+                <div class="metric-card speed-card">
+                    <div class="card-accent-bar ping-bar"></div>
+                    <div class="speed-metric-header">
+                        <span class="speed-metric-title">Latency / Ping</span>
+                        <svg class="speed-metric-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ECC94B" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                    <div class="speed-metric-value-row">
+                        <span class="speed-metric-num" id="resPing">--</span>
+                        <span class="speed-metric-unit">ms</span>
+                    </div>
+                    <div class="speed-metric-sub" id="pingQuality">Idle</div>
+                </div>
+
+                <div class="metric-card speed-card">
+                    <div class="card-accent-bar dl-bar"></div>
+                    <div class="speed-metric-header">
+                        <span class="speed-metric-title">Download Throughput</span>
+                        <svg class="speed-metric-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4E88FF" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <polyline points="19 12 12 19 5 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="speed-metric-value-row">
+                        <span class="speed-metric-num" id="resDownload">--</span>
+                        <span class="speed-metric-unit">Mbps</span>
+                    </div>
+                    <div class="speed-metric-sub" id="dlPayload">Peak transfer speed</div>
+                </div>
+
+                <div class="metric-card speed-card">
+                    <div class="card-accent-bar ul-bar"></div>
+                    <div class="speed-metric-header">
+                        <span class="speed-metric-title">Upload Throughput</span>
+                        <svg class="speed-metric-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#68D391" stroke-width="2">
+                            <line x1="12" y1="19" x2="12" y2="5"></line>
+                            <polyline points="5 12 12 5 19 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="speed-metric-value-row">
+                        <span class="speed-metric-num" id="resUpload">--</span>
+                        <span class="speed-metric-unit">Mbps</span>
+                    </div>
+                    <div class="speed-metric-sub" id="ulPayload">Outbound throughput</div>
+                </div>
+
+                <div class="metric-card speed-card">
+                    <div class="card-accent-bar srv-bar"></div>
+                    <div class="speed-metric-header">
+                        <span class="speed-metric-title">Server &amp; ISP</span>
+                        <svg class="speed-metric-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="2">
+                            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                            <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                            <line x1="6" y1="18" x2="6.01" y2="18"></line>
+                        </svg>
+                    </div>
+                    <div class="server-node-info">
+                        <div class="server-name-label" id="resServer">--</div>
+                        <div class="server-isp-label" id="resIsp">--</div>
+                    </div>
+                    <div class="speed-metric-sub" id="resLocation">Local Client</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SVG Historical Bandwidth Chart (Zero Canvas!) -->
+    <section class="speed-history-section">
+        <div class="section-card">
+            <div class="section-card-header">
+                <div>
+                    <h2 class="section-card-title">Bandwidth Performance History</h2>
+                    <p class="section-card-sub">Historical download and upload benchmarks recorded in SQLite (Pure SVG)</p>
+                </div>
+                <div class="chart-legend-row">
+                    <span class="legend-item"><span class="legend-color dl-color"></span> Download (Mbps)</span>
+                    <span class="legend-item"><span class="legend-color ul-color"></span> Upload (Mbps)</span>
+                    <button class="btn btn-ghost btn-sm" id="refreshHistoryBtn" title="Refresh past test runs">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 4v6h-6"></path>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        <span>Refresh</span>
+                    </button>
+                </div>
+            </div>
+            <div class="svg-chart-container" id="speedChartContainer">
+                <svg id="speedHistorySvg" class="history-svg-chart" viewBox="0 0 900 240" preserveAspectRatio="none">
+                    <!-- Dynamic chart rendered by speed-test.js -->
+                </svg>
+                <div class="chart-empty-state" id="chartEmptyState" style="display: none;">
+                    No speed test history recorded yet. Click "Run Speed Test" to begin tracking network performance.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Historical Test Runs Table -->
+    <section class="speed-table-section">
+        <div class="section-card">
+            <div class="section-card-header">
+                <h2 class="section-card-title">Historical Test Runs</h2>
+                <span class="table-count-badge" id="tableCountBadge">0 records</span>
+            </div>
+            <div class="table-responsive">
+                <table class="editorial-table speed-runs-table">
+                    <thead>
+                        <tr>
+                            <th>Date &amp; Time</th>
+                            <th>Latency</th>
+                            <th>Download</th>
+                            <th>Upload</th>
+                            <th>Server Node</th>
+                            <th>ISP / Client</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="speedHistoryTableBody">
+                        <tr>
+                            <td colspan="7" class="table-empty-cell">Loading test records...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="{{ url_for('static', filename='js/speed-test.js') }}"></script>
+{% endblock %}

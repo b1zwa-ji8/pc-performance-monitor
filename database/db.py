@@ -105,6 +105,39 @@ def init_db():
         )
     ''')
 
+    # Benchmark runs history
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS benchmark_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp REAL NOT NULL,
+            target_app TEXT,
+            duration_seconds REAL,
+            avg_fps REAL,
+            low_1_fps REAL,
+            low_01_fps REAL,
+            total_frames INTEGER,
+            summary_json TEXT,
+            timeline_json TEXT
+        )
+    ''')
+
+    # Speed tests history
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS speed_tests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp REAL NOT NULL,
+            ping_ms REAL,
+            download_mbps REAL,
+            upload_mbps REAL,
+            server_name TEXT,
+            server_country TEXT,
+            server_sponsor TEXT,
+            client_ip TEXT,
+            isp TEXT,
+            status TEXT DEFAULT 'completed'
+        )
+    ''')
+
     # Create indexes for faster time-range queries
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_cpu_ts ON cpu_history(timestamp)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_mem_ts ON memory_history(timestamp)')
@@ -112,6 +145,8 @@ def init_db():
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_net_ts ON network_history(timestamp)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_disk_ts ON disk_history(timestamp)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_alert_ts ON alerts_log(timestamp)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_bench_ts ON benchmark_history(timestamp)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_speed_ts ON speed_tests(timestamp)')
 
     conn.commit()
 
@@ -252,3 +287,25 @@ def cleanup_old_data(days=30):
     """Remove data older than the specified number of days."""
     cutoff = time.time() - (days * 86400)
     delete_history(before=cutoff)
+
+
+def save_speed_test(ping_ms, download_mbps, upload_mbps, server_name='', server_country='', server_sponsor='', client_ip='', isp='', status='completed'):
+    """Save a speed test result to SQLite."""
+    conn = get_connection()
+    ts = time.time()
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO speed_tests (timestamp, ping_ms, download_mbps, upload_mbps, server_name, server_country, server_sponsor, client_ip, isp, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (ts, ping_ms, download_mbps, upload_mbps, server_name, server_country, server_sponsor, client_ip, isp, status))
+    conn.commit()
+    return cursor.lastrowid
+
+
+def get_speed_test_history(limit=50):
+    """Retrieve past speed test results ordered by timestamp descending."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    rows = cursor.execute('SELECT * FROM speed_tests ORDER BY timestamp DESC LIMIT ?', (limit,)).fetchall()
+    return [dict(r) for r in rows]
+
