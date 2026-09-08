@@ -149,14 +149,47 @@ console.log("[STRESS-TEST] module loaded");
         gl_Position = vec4(a_position, 0.0, 1.0);
     }`;
 
-    // Stage 2: Animated Gradient with u_time
+    // Stage 3: Raymarched SDF Sphere
     const FS_SOURCE = `#version 300 es
     precision highp float;
     in vec2 v_uv;
+    uniform vec2 u_resolution;
     uniform float u_time;
     out vec4 fragColor;
+
+    float sphereSDF(vec3 p) {
+        return length(p) - 1.0;
+    }
+
+    vec3 getNormal(vec3 p) {
+        float eps = 0.001;
+        return normalize(vec3(
+            sphereSDF(p + vec3(eps, 0.0, 0.0)) - sphereSDF(p - vec3(eps, 0.0, 0.0)),
+            sphereSDF(p + vec3(0.0, eps, 0.0)) - sphereSDF(p - vec3(0.0, eps, 0.0)),
+            sphereSDF(p + vec3(0.0, 0.0, eps)) - sphereSDF(p - vec3(0.0, 0.0, eps))
+        ));
+    }
+
     void main() {
-        fragColor = vec4(v_uv.x, v_uv.y, 0.5 + 0.5 * sin(u_time), 1.0);
+        vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+        vec3 ro = vec3(0.0, 0.0, -3.0);
+        vec3 rd = normalize(vec3(uv, 1.4));
+        float t = 0.0;
+        for (int i = 0; i < 64; i++) {
+            vec3 p = ro + rd * t;
+            float d = sphereSDF(p);
+            if (d < 0.001) break;
+            t += d;
+            if (t > 10.0) break;
+        }
+        if (t < 10.0) {
+            vec3 n = getNormal(ro + rd * t);
+            vec3 light = normalize(vec3(sin(u_time), 1.0, -1.0));
+            float diff = max(dot(n, light), 0.1);
+            fragColor = vec4(vec3(diff * 0.8 + 0.2), 1.0);
+        } else {
+            fragColor = vec4(0.08, 0.08, 0.12, 1.0);
+        }
     }`;
 
     // ── WebGL2 Engine Initialization ──────────────────────────────────────────
