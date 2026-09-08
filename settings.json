@@ -1,5 +1,5 @@
 {
-  "refresh_interval": 2,
+  "refresh_interval": 1,
   "cpu_warning": 90,
   "ram_warning": 90,
   "disk_warning": 90,
@@ -9,5 +9,11 @@
   "alerts_enabled": true,
   "theme": "dark",
   "auto_start": true,
-  "history_retention_days": 30
+  "history_retention_days": 30,
+  "mode_3d": true,
+  "quality_3d": "medium",
+  "pc_model_enabled": true,
+  "accent_preset": "blue",
+  "accent_primary": "#4E88FF",
+  "accent_secondary": "#68D391"
 }

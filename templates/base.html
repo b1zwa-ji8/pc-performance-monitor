@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Personal PC Performance Monitor{% endblock %}</title>
     <meta name="description" content="Personal PC Performance Monitor — Real-time telemetry, node graph canvas, and system health analysis.">
+    <!-- Anti-FOUC Theme & Accent Initializer -->
+    <script>
+        (function() {
+            try {
+                var primary = localStorage.getItem('pc_monitor_accent_primary');
+                var secondary = localStorage.getItem('pc_monitor_accent_secondary');
+                if (primary) {
+                    document.documentElement.style.setProperty('--accent-primary', primary);
+                    document.documentElement.style.setProperty('--accent-primary-hover', primary);
+                }
+                if (secondary) {
+                    document.documentElement.style.setProperty('--accent-secondary', secondary);
+                }
+            } catch (e) {}
+        })();
+    </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
