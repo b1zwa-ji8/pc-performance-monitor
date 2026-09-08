@@ -149,47 +149,161 @@ console.log("[STRESS-TEST] module loaded");
         gl_Position = vec4(a_position, 0.0, 1.0);
     }`;
 
-    // Stage 3: Raymarched SDF Sphere
+    // Stage 4: Volumetric fbm Noise Field (Type-Corrected & Optimized)
     const FS_SOURCE = `#version 300 es
     precision highp float;
+    precision highp int;
+
     in vec2 v_uv;
-    uniform vec2 u_resolution;
-    uniform float u_time;
     out vec4 fragColor;
 
-    float sphereSDF(vec3 p) {
-        return length(p) - 1.0;
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform int u_steps;
+    uniform int u_octaves;
+    uniform float u_density;
+
+    // Fast procedural hash for 3D pseudo-random lattice
+    float hash(vec3 p) {
+        p = fract(p * 0.3183099 + vec3(0.1, 0.2, 0.3));
+        p *= 17.0;
+        return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
     }
 
-    vec3 getNormal(vec3 p) {
-        float eps = 0.001;
-        return normalize(vec3(
-            sphereSDF(p + vec3(eps, 0.0, 0.0)) - sphereSDF(p - vec3(eps, 0.0, 0.0)),
-            sphereSDF(p + vec3(0.0, eps, 0.0)) - sphereSDF(p - vec3(0.0, eps, 0.0)),
-            sphereSDF(p + vec3(0.0, 0.0, eps)) - sphereSDF(p - vec3(0.0, 0.0, eps))
-        ));
+    // 3D Value Noise with analytical gradients & cubic Hermite interpolation
+    float noise(vec3 p) {
+        vec3 i = floor(p);
+        vec3 f = fract(p);
+
+        // Quintic smoothstep curve for artifact-free gradient interpolation
+        f = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+
+        float n000 = hash(i + vec3(0.0, 0.0, 0.0));
+        float n100 = hash(i + vec3(1.0, 0.0, 0.0));
+        float n010 = hash(i + vec3(0.0, 1.0, 0.0));
+        float n110 = hash(i + vec3(1.0, 1.0, 0.0));
+        float n001 = hash(i + vec3(0.0, 0.0, 1.0));
+        float n101 = hash(i + vec3(1.0, 0.0, 1.0));
+        float n011 = hash(i + vec3(0.0, 1.0, 1.0));
+        float n111 = hash(i + vec3(1.0, 1.0, 1.0));
+
+        float nx00 = mix(n000, n100, f.x);
+        float nx10 = mix(n010, n110, f.x);
+        float nx01 = mix(n001, n101, f.x);
+        float nx11 = mix(n011, n111, f.x);
+
+        float nxy0 = mix(nx00, nx10, f.y);
+        float nxy1 = mix(nx01, nx11, f.y);
+
+        return mix(nxy0, nxy1, f.z);
+    }
+
+    // Fractional Brownian Motion (fBm) with dynamic octave count & domain rotation
+    float fbm(vec3 p, int octaves) {
+        float value = 0.0;
+        float amplitude = 0.5;
+        float frequency = 1.0;
+        mat3 rot = mat3(
+            0.00,  0.80,  0.60,
+           -0.80,  0.36, -0.48,
+           -0.60, -0.48,  0.64
+        );
+
+        for (int i = 0; i < 5; i++) {
+            if (i >= octaves) break;
+            value += amplitude * noise(p * frequency);
+            p = rot * p * 2.02 + vec3(0.15, 0.25, 0.35);
+            amplitude *= 0.5;
+            frequency *= 1.02;
+        }
+        return value;
+    }
+
+    // Volumetric density evaluation at world-space position p
+    float mapDensity(vec3 p, float t) {
+        // Dynamic pulsating core and orbiting distortion
+        vec3 q = p + vec3(sin(t * 0.4), cos(t * 0.3), sin(t * 0.5)) * 0.6;
+        float dCore = length(q) - 1.8;
+
+        // Domain warping with fBm
+        vec3 warp = vec3(
+            fbm(p + vec3(0.0, 0.0, t * 0.2), u_octaves),
+            fbm(p + vec3(5.2, 1.3, t * 0.2), u_octaves),
+            fbm(p + vec3(2.8, 4.4, t * 0.2), u_octaves)
+        );
+
+        float n = fbm(p * 1.5 + warp * 1.2, u_octaves);
+        float density = max(0.0, (n * 1.6 - 0.5) - dCore * 0.8) * u_density;
+        return density;
     }
 
     void main() {
+        // Normalized coordinates [-1, 1] with aspect correction
         vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
-        vec3 ro = vec3(0.0, 0.0, -3.0);
-        vec3 rd = normalize(vec3(uv, 1.4));
-        float t = 0.0;
-        for (int i = 0; i < 64; i++) {
-            vec3 p = ro + rd * t;
-            float d = sphereSDF(p);
-            if (d < 0.001) break;
-            t += d;
-            if (t > 10.0) break;
+
+        // Camera setup with smooth orbital motion
+        float camDist = 3.6;
+        float camRotSpeed = u_time * 0.25;
+        vec3 ro = vec3(sin(camRotSpeed) * camDist, 1.2 * sin(u_time * 0.15), cos(camRotSpeed) * camDist);
+        vec3 target = vec3(0.0, 0.0, 0.0);
+
+        vec3 forward = normalize(target - ro);
+        vec3 right = normalize(cross(forward, vec3(0.0, 1.0, 0.0)));
+        vec3 up = cross(right, forward);
+
+        vec3 rd = normalize(uv.x * right + uv.y * up + forward * 1.4);
+
+        // Volumetric raymarching accumulation
+        vec4 col = vec4(0.0);
+        float stepSize = 5.0 / float(u_steps);
+        float t = 0.4;
+        float maxDist = 5.6;
+
+        // Light source position (dynamic orbiting light)
+        vec3 lightPos = vec3(sin(u_time * 0.8) * 3.0, 2.5, cos(u_time * 0.8) * 3.0);
+
+        // Raymarching loop (heavily exercises ALU and vector units)
+        for (int i = 0; i < 180; i++) {
+            if (i >= u_steps || t > maxDist || col.a >= 0.98) break;
+
+            vec3 pos = ro + rd * t;
+            float dens = mapDensity(pos, u_time);
+
+            if (dens > 0.001) {
+                // Secondary light probe for scattering shadow (FIXED: pass float u_time instead of int u_octaves)
+                vec3 toLight = normalize(lightPos - pos);
+                float lightProbe = mapDensity(pos + toLight * 0.2, u_time);
+                float shadow = clamp(exp(-lightProbe * 2.5), 0.15, 1.0);
+
+                // Deep plasma palette: fiery ember core blending to luminous cyan/indigo corona
+                float depthFactor = clamp(length(pos) / 2.2, 0.0, 1.0);
+                vec3 baseColor = mix(
+                    vec3(1.0, 0.32, 0.08), // Fire core
+                    vec3(0.12, 0.65, 0.95), // Luminous corona
+                    depthFactor
+                );
+
+                // Highlight accents
+                baseColor += vec3(0.8, 0.7, 0.3) * pow(shadow, 3.0) * 0.4;
+
+                // Beer-Lambert transmittance integration
+                float alpha = 1.0 - exp(-dens * stepSize);
+                col.rgb += (1.0 - col.a) * baseColor * dens * shadow * alpha * 2.2;
+                col.a += (1.0 - col.a) * alpha;
+            }
+
+            t += stepSize;
         }
-        if (t < 10.0) {
-            vec3 n = getNormal(ro + rd * t);
-            vec3 light = normalize(vec3(sin(u_time), 1.0, -1.0));
-            float diff = max(dot(n, light), 0.1);
-            fragColor = vec4(vec3(diff * 0.8 + 0.2), 1.0);
-        } else {
-            fragColor = vec4(0.08, 0.08, 0.12, 1.0);
-        }
+
+        // Deep space dark background with subtle radial gradient
+        vec3 bg = mix(vec3(0.04, 0.04, 0.06), vec3(0.01, 0.01, 0.02), length(uv));
+        vec3 finalRgb = col.rgb + bg * (1.0 - col.a);
+
+        // ACES filmic tonemapping curve
+        finalRgb = (finalRgb * (2.51 * finalRgb + 0.03)) / (finalRgb * (2.43 * finalRgb + 0.59) + 0.14);
+        finalRgb = clamp(finalRgb, 0.0, 1.0);
+
+        fragColor = vec4(finalRgb, 1.0);
     }`;
 
     // ── WebGL2 Engine Initialization ──────────────────────────────────────────
