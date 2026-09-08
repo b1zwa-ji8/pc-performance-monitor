@@ -1,170 +1,113 @@
 {% extends "base.html" %}
-{% block title %}Overview — PC Monitor{% endblock %}
+{% block title %}Overview — Personal PC Performance Monitor{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div>
-        <h1 class="page-title"><span class="page-title-icon">📊</span> Overview</h1>
-        <p class="page-subtitle">System performance at a glance</p>
-    </div>
-    <div id="systemUptime" class="flex items-center gap-8" style="font-size:0.85rem;color:var(--text-secondary);">
-        ⏱️ Uptime: <strong id="uptimeValue" style="color:var(--text-primary)">—</strong>
-    </div>
-</div>
+<!-- Section 3: Split-Screen Hero + Node Canvas -->
+<section class="split-hero-section">
+    <!-- Left Panel (~38%) -->
+    <div class="split-hero-left">
+        <svg class="hero-ambient-svg" id="heroAmbientSvg" viewBox="0 0 800 300" preserveAspectRatio="none"></svg>
+        <div class="hero-ambient-overlay"></div>
 
-<!-- System info bar -->
-<div class="info-bar" id="systemInfoBar">
-    <div class="info-item">🖥️ <strong id="infoHostname">—</strong></div>
-    <div class="info-item">💻 <strong id="infoOS">—</strong></div>
-    <div class="info-item">⚙️ Processes: <strong id="infoProcessCount">—</strong></div>
-</div>
+        <div class="hero-left-header">
+            <div class="hero-header-eyebrow">Real-Time Telemetry</div>
+            <h1 class="hero-header-title">System Overview</h1>
+        </div>
 
-<!-- Metric cards -->
-<div class="metric-grid" id="metricGrid">
-    <!-- CPU Card -->
-    <div class="metric-card blue" onclick="location.href='/cpu'">
-        <div class="metric-card-header">
-            <div class="metric-card-icon">🔲</div>
-            <span class="metric-card-label">CPU</span>
-        </div>
-        <div class="metric-card-value" id="cpuValue">—<span class="unit">%</span></div>
-        <div class="metric-card-detail" id="cpuDetail">Loading...</div>
-        <div class="metric-card-footer">
-            <div class="progress-bar"><div class="progress-fill blue" id="cpuBar" style="width:0%"></div></div>
-        </div>
-        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
-            <span class="trend stable" id="cpuTrend">— stable</span>
-            <span class="status-badge normal" id="cpuStatus"><span class="status-dot"></span> Normal</span>
-        </div>
+        <!-- Floating Dark Control Panel -->
+        <div id="heroControlPanel"></div>
     </div>
 
-    <!-- RAM Card -->
-    <div class="metric-card green" onclick="location.href='/memory'">
-        <div class="metric-card-header">
-            <div class="metric-card-icon">💾</div>
-            <span class="metric-card-label">Memory</span>
-        </div>
-        <div class="metric-card-value" id="ramValue">—<span class="unit">%</span></div>
-        <div class="metric-card-detail" id="ramDetail">Loading...</div>
-        <div class="metric-card-footer">
-            <div class="progress-bar"><div class="progress-fill green" id="ramBar" style="width:0%"></div></div>
-        </div>
-        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
-            <span class="trend stable" id="ramTrend">— stable</span>
-            <span class="status-badge normal" id="ramStatus"><span class="status-dot"></span> Normal</span>
+    <!-- Right Panel (Node Canvas ~62%) -->
+    <div class="split-hero-right dot-grid-bg" id="canvasContainer">
+        <!-- SVG Bezier Connector Layer -->
+        <svg class="connector-layer canvas-connectors-svg" id="canvasConnectorsSvg"></svg>
+
+        <div class="canvas-workspace" id="canvasWorkspace">
+            <!-- Central Hub Node: "This PC" -->
+            <div class="canvas-hub-node" id="hubNode">
+                <div class="hub-mark"></div>
+                <div>
+                    <div class="hub-label" id="hubHostname">This PC</div>
+                    <div class="hub-specs" id="hubOs">Loading system...</div>
+                </div>
+            </div>
+
+            <!-- 6 Metric Nodes are injected here by overview.js -->
+            <!-- CPU, RAM, GPU, Disk, Network, Battery -->
         </div>
     </div>
+</section>
 
-    <!-- GPU Card -->
-    <div class="metric-card purple" onclick="location.href='/gpu'">
-        <div class="metric-card-header">
-            <div class="metric-card-icon">🎮</div>
-            <span class="metric-card-label">GPU</span>
-        </div>
-        <div class="metric-card-value" id="gpuValue">—<span class="unit">%</span></div>
-        <div class="metric-card-detail" id="gpuDetail">Loading...</div>
-        <div class="metric-card-footer">
-            <div class="progress-bar"><div class="progress-fill purple" id="gpuBar" style="width:0%"></div></div>
-        </div>
-        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
-            <span class="trend stable" id="gpuTrend">— stable</span>
-            <span class="status-badge normal" id="gpuStatus"><span class="status-dot"></span> Normal</span>
-        </div>
-    </div>
+<!-- Section 5: System Story (Light Editorial Break) -->
+<section class="system-story-section" id="systemStory">
+    <div class="story-container">
+        <div class="story-eyebrow">System Story &bull; Health Analysis</div>
+        <h2 class="story-headline" id="storyHeadline">Everything is running smoothly.</h2>
+        <p class="story-body" id="storyBody">
+            All system resources are within nominal thresholds. Memory allocation is well-balanced and thermal dissipation is stable.
+        </p>
 
-    <!-- Disk Card -->
-    <div class="metric-card orange" onclick="location.href='/disk'">
-        <div class="metric-card-header">
-            <div class="metric-card-icon">💿</div>
-            <span class="metric-card-label">Disk</span>
-        </div>
-        <div class="metric-card-value" id="diskValue">—<span class="unit">%</span></div>
-        <div class="metric-card-detail" id="diskDetail">Loading...</div>
-        <div class="metric-card-footer">
-            <div class="progress-bar"><div class="progress-fill orange" id="diskBar" style="width:0%"></div></div>
-        </div>
-        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
-            <span class="trend stable" id="diskTrend">— stable</span>
-            <span class="status-badge normal" id="diskStatus"><span class="status-dot"></span> Normal</span>
-        </div>
-    </div>
+        <!-- Editorial Pill Time Range Switcher -->
+        <div id="editorialPillsContainer"></div>
 
-    <!-- Network Card -->
-    <div class="metric-card cyan" onclick="location.href='/network'">
-        <div class="metric-card-header">
-            <div class="metric-card-icon">🌐</div>
-            <span class="metric-card-label">Network</span>
-        </div>
-        <div class="metric-card-value" id="netValue" style="font-size:1.3rem;">—</div>
-        <div class="metric-card-detail" id="netDetail">Loading...</div>
-        <div class="metric-card-footer">
-            <div style="display:flex;gap:16px;font-size:0.78rem;width:100%;">
-                <span style="color:var(--accent-green);">↑ <span id="netUpload">0 B/s</span></span>
-                <span style="color:var(--accent-blue);">↓ <span id="netDownload">0 B/s</span></span>
+        <!-- Side Peeking Preview Cards -->
+        <div class="story-preview-cards">
+            <div class="story-mini-card">
+                <span class="mini-card-tag">Peak Today</span>
+                <div class="mini-card-title">Max CPU Load</div>
+                <div class="mini-card-value" id="storyCpuPeak">—%</div>
+                <div class="mini-card-detail" id="storyCpuDetail">Recorded during active task</div>
+            </div>
+            <div class="story-mini-card">
+                <span class="mini-card-tag">Memory Floor</span>
+                <div class="mini-card-title">Available RAM</div>
+                <div class="mini-card-value" id="storyRamAvail">— GB</div>
+                <div class="mini-card-detail" id="storyRamTotal">Out of total capacity</div>
+            </div>
+            <div class="story-mini-card">
+                <span class="mini-card-tag">Network Flow</span>
+                <div class="mini-card-title">Peak Download</div>
+                <div class="mini-card-value" id="storyNetPeak">— MB/s</div>
+                <div class="mini-card-detail" id="storyNetDetail">Active interface socket</div>
+            </div>
+            <div class="story-mini-card">
+                <span class="mini-card-tag">Uptime Session</span>
+                <div class="mini-card-title">Current Uptime</div>
+                <div class="mini-card-value" id="storyUptime" style="font-size: 1.8rem;">—</div>
+                <div class="mini-card-detail" id="storyProcessCount">0 active processes</div>
             </div>
         </div>
-        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
-            <span class="trend stable" id="netTrend">— stable</span>
-            <span class="status-badge normal" id="netStatus"><span class="status-dot"></span> Active</span>
-        </div>
+    </div>
+</section>
+
+<!-- Section 6: Performance Profiles (Pricing Plan Pattern) -->
+<section class="profile-section dot-grid-bg" id="profiles">
+    <div class="section-header-center">
+        <div class="section-eyebrow">Operating Modes</div>
+        <h2 class="section-headline">Performance Profiles</h2>
+        <p class="section-subhead">Adjust telemetry polling frequency and background resource impact.</p>
     </div>
 
-    <!-- Battery Card -->
-    <div class="metric-card red" id="batteryCard">
-        <div class="metric-card-header">
-            <div class="metric-card-icon">🔋</div>
-            <span class="metric-card-label">Battery</span>
-        </div>
-        <div class="metric-card-value" id="batValue">—<span class="unit">%</span></div>
-        <div class="metric-card-detail" id="batDetail">Loading...</div>
-        <div class="metric-card-footer">
-            <div class="progress-bar"><div class="progress-fill green" id="batBar" style="width:0%"></div></div>
-        </div>
-        <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;">
-            <span class="trend stable" id="batTrend">—</span>
-            <span class="status-badge normal" id="batStatus"><span class="status-dot"></span> Normal</span>
-        </div>
-    </div>
-</div>
+    <!-- Toggle Switch (Celsius / Fahrenheit or Profile Toggle) -->
+    <div id="tempUnitToggle"></div>
 
-<!-- Live Charts -->
-<div class="grid-2 mb-20">
-    <div class="card">
-        <div class="card-header">
-            <span class="card-title">📈 CPU Usage</span>
-        </div>
-        <div class="chart-container">
-            <canvas id="overviewCpuChart"></canvas>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-header">
-            <span class="card-title">📈 Memory Usage</span>
-        </div>
-        <div class="chart-container">
-            <canvas id="overviewMemChart"></canvas>
-        </div>
-    </div>
-</div>
+    <!-- 3 Profile Cards (Light, Balanced, Detailed) -->
+    <div id="profileSelectorContainer"></div>
+</section>
 
-<div class="grid-2">
-    <div class="card">
-        <div class="card-header">
-            <span class="card-title">📈 Network Activity</span>
+<!-- Section 7: Troubleshooting (FAQ Accordion Pattern) -->
+<section class="troubleshooting-section dot-grid-bg" id="troubleshooting">
+    <div class="troubleshooting-container">
+        <div class="section-header-center" style="margin-bottom: 36px; text-align: left;">
+            <div class="section-eyebrow">Diagnostics &amp; FAQ</div>
+            <h2 class="section-headline">Troubleshooting</h2>
+            <p class="section-subhead">Answers to common local hardware monitoring and sensor questions.</p>
         </div>
-        <div class="chart-container">
-            <canvas id="overviewNetChart"></canvas>
-        </div>
+
+        <div id="troubleshootingAccordion"></div>
     </div>
-    <div class="card">
-        <div class="card-header">
-            <span class="card-title">📈 Disk I/O</span>
-        </div>
-        <div class="chart-container">
-            <canvas id="overviewDiskChart"></canvas>
-        </div>
-    </div>
-</div>
+</section>
 {% endblock %}
 
 {% block scripts %}

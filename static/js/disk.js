@@ -1,125 +1,200 @@
 /**
- * Disk page — partitions, I/O chart, and storage analyzer.
+ * Disk Detail Page Controller — Melius Reference Design System
+ * Split-screen ambient wave, sub-nodes, bezier connectors, partition cards, I/O chart, and analyzer.
  */
 
-let diskIOChart;
-
 document.addEventListener('DOMContentLoaded', () => {
-    diskIOChart = createLineChart('diskIOChart', {
-        showLegend: true,
-        max: null,
-        datasets: [
-            { label: 'Read', data: [], borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.08)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 0 },
-            { label: 'Write', data: [], borderColor: '#fb923c', backgroundColor: 'rgba(251,146,60,0.08)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 0 },
-        ],
-        yCallback: (v) => formatSpeed(v),
-    });
+    'use strict';
 
-    document.getElementById('analyzeBtn')?.addEventListener('click', analyzeDirectory);
-    document.getElementById('analyzePath')?.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') analyzeDirectory();
-    });
+    let diskChart = null;
+    const connectors = new ConnectorManager('canvasConnectorsSvg');
+    const hub = document.getElementById('diskHubNode');
 
-    fetchDisk();
-    setInterval(fetchDisk, 2000);
-});
+    if (window.Dashboard) {
+        window.Dashboard.init('disk');
+        window.Dashboard.setActiveMetricTab('disk');
+    }
 
-async function fetchDisk() {
-    try {
-        const resp = await fetch('/api/disk');
-        const json = await resp.json();
-        if (!json.success) return;
-        const d = json.data;
+    // Build Sub-Nodes for Read and Write
+    const specsGrid = document.getElementById('diskSpecsGrid');
+    const readNode = new NodeCard({ id: 'disk-read', title: 'Read Speed', subtitle: 'I/O Inflow', unit: 'B/s', value: 0 });
+    const writeNode = new NodeCard({ id: 'disk-write', title: 'Write Speed', subtitle: 'I/O Outflow', unit: 'B/s', value: 0 });
 
-        // I/O stats
-        const io = d.io || {};
-        document.getElementById('diskRead').textContent = io.read_speed_fmt || '0 B/s';
-        document.getElementById('diskWrite').textContent = io.write_speed_fmt || '0 B/s';
+    if (specsGrid) {
+        specsGrid.appendChild(readNode.element);
+        specsGrid.appendChild(writeNode.element);
+    }
 
-        // Partitions
-        const grid = document.getElementById('partitionGrid');
-        const parts = d.partitions || [];
-        if (grid) {
-            grid.innerHTML = parts.map(p => {
-                const color = p.percent >= 90 ? 'var(--accent-red)' : p.percent >= 70 ? 'var(--accent-yellow)' : 'var(--accent-blue)';
-                const barColor = p.percent >= 90 ? 'red' : p.percent >= 70 ? 'yellow' : 'blue';
-                return `
-                    <div class="partition-card">
-                        <div class="partition-header">
-                            <span class="partition-name">💿 ${p.device}</span>
-                            <span class="partition-percent" style="color:${color}">${p.percent}%</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill ${barColor}" style="width:${p.percent}%"></div>
-                        </div>
-                        <div class="partition-details">
-                            <span>Total: ${p.total} GB</span>
-                            <span>Used: ${p.used} GB</span>
-                            <span>Free: ${p.free} GB</span>
-                            <span>${p.fstype}</span>
-                        </div>
+    setTimeout(() => {
+        if (hub) {
+            connectors.connect('disk-read', hub, document.getElementById('dot-disk-read'), { status: 'normal' });
+            connectors.connect('disk-write', hub, document.getElementById('dot-disk-write'), { status: 'normal' });
+        }
+    }, 120);
+
+    const partitionNodes = [];
+
+    async function fetchDiskTelemetry() {
+        try {
+            const resp = await fetch('/api/disk');
+            const json = await resp.json();
+            if (!json.success || !json.data) return;
+            const d = json.data;
+
+            const readBps = d.read_speed || 0;
+            const writeBps = d.write_speed || 0;
+            const readFmt = d.read_speed_fmt || formatSpeed(readBps);
+            const writeFmt = d.write_speed_fmt || formatSpeed(writeBps);
+
+            readNode.update(readBps, {
+                formatted: readFmt.split(' ')[0],
+                unit: readFmt.split(' ')[1] || 'B/s'
+            });
+
+            writeNode.update(writeBps, {
+                formatted: writeFmt.split(' ')[0],
+                unit: writeFmt.split(' ')[1] || 'B/s'
+            });
+
+            // Partitions
+            const parts = d.partitions || [];
+            const partCountEl = document.getElementById('diskPartCount');
+            if (partCountEl) partCountEl.textContent = `${parts.length} Mounted Volumes`;
+
+            if (parts.length > 0) {
+                const p0 = parts[0];
+                const p0Percent = Math.round(p0.percent || 0);
+                const percentEl = document.getElementById('primaryDiskPercent');
+                const subEl = document.getElementById('diskSubtitle');
+                const sumEl = document.getElementById('diskSummaryText');
+
+                if (percentEl) percentEl.textContent = p0Percent;
+                if (subEl) subEl.textContent = `Primary ${p0.device} (${p0.used || 0} GB used of ${p0.total || 0} GB)`;
+                if (sumEl) {
+                    sumEl.textContent = `Primary drive is ${p0Percent}% full. Read: ${readFmt}, Write: ${writeFmt}.`;
+                }
+
+                // Partition grid
+                const partGrid = document.getElementById('partitionGrid');
+                if (partGrid) {
+                    if (partitionNodes.length === 0) {
+                        partGrid.innerHTML = '';
+                        parts.forEach((p, idx) => {
+                            const pNode = new NodeCard({
+                                id: `part-${idx}`,
+                                title: p.device || `Disk ${idx}`,
+                                subtitle: `${p.used} / ${p.total} GB`,
+                                unit: '%',
+                                value: Math.round(p.percent || 0),
+                                status: getStatusClass(p.percent || 0, { warning: 85, critical: 95 })
+                            });
+                            partitionNodes.push(pNode);
+                            partGrid.appendChild(pNode.element);
+                        });
+                    } else {
+                        parts.forEach((p, idx) => {
+                            if (partitionNodes[idx]) {
+                                const val = Math.round(p.percent || 0);
+                                partitionNodes[idx].update(val, {
+                                    subtitle: `${p.used} / ${p.total} GB`,
+                                    status: getStatusClass(val, { warning: 85, critical: 95 })
+                                });
+                            }
+                        });
+                    }
+                }
+            }
+
+            // Buffer updates for I/O chart
+            if (json.buffer && diskChart) {
+                updateDiskChart(json.buffer);
+            }
+
+        } catch (e) { /* retry */ }
+    }
+
+    function initChart() {
+        const el = document.getElementById('diskIOChart');
+        if (!el || typeof SvgMultiLineChart === 'undefined') return;
+
+        diskChart = new SvgMultiLineChart(el, {
+            unit: 'MB/s',
+            datasets: [
+                { label: 'Read Speed', color: 'var(--status-normal, #68D391)' },
+                { label: 'Write Speed', color: 'var(--accent-primary, #4E88FF)' }
+            ]
+        });
+    }
+
+    function updateDiskChart(buffer) {
+        if (!diskChart || !Array.isArray(buffer)) return;
+        const labels = buffer.map((_, i) => `${i}s`);
+        const reads = buffer.map(b => (b.read || 0) / (1024 * 1024));
+        const writes = buffer.map(b => (b.write || 0) / (1024 * 1024));
+
+        diskChart.update(labels, [
+            { label: 'Read', color: 'var(--status-normal, #68D391)', data: reads },
+            { label: 'Write', color: 'var(--accent-primary, #4E88FF)', data: writes }
+        ]);
+    }
+
+    // Storage Analyzer
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const analyzePathInput = document.getElementById('analyzePath');
+    const resultsContainer = document.getElementById('analyzerResults');
+
+    if (analyzeBtn && analyzePathInput) {
+        analyzeBtn.addEventListener('click', async () => {
+            const path = analyzePathInput.value.trim();
+            if (!path) return;
+
+            resultsContainer.innerHTML = `<p style="color: var(--text-on-dark-muted);">Analyzing "${path}"...</p>`;
+
+            try {
+                const resp = await fetch(`/api/disk/analyze?path=${encodeURIComponent(path)}`);
+                const json = await resp.json();
+                if (!json.success || !json.data) {
+                    resultsContainer.innerHTML = `<p style="color: var(--status-critical);">${json.error || 'Failed to scan directory'}</p>`;
+                    return;
+                }
+
+                const items = json.data.items || [];
+                if (items.length === 0) {
+                    resultsContainer.innerHTML = `<p style="color: var(--text-on-dark-muted);">No large files or folders found.</p>`;
+                    return;
+                }
+
+                resultsContainer.innerHTML = `
+                    <div class="data-table-wrap">
+                        <table class="editorial-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Size</th>
+                                    <th>Path</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${items.slice(0, 10).map(it => `
+                                    <tr>
+                                        <td><strong>${it.name}</strong></td>
+                                        <td>${it.is_dir ? '📁 Directory' : '📄 File'}</td>
+                                        <td><span style="color: var(--accent-primary); font-weight: 600;">${it.size_fmt || formatBytes(it.size)}</span></td>
+                                        <td style="color: var(--text-on-dark-muted); font-size: 0.78rem;">${it.path}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
                     </div>
                 `;
-            }).join('');
-        }
-
-        // I/O chart
-        if (json.buffer) {
-            updateMultiLineChart(diskIOChart, json.buffer, ['read', 'write'], 60);
-        }
-    } catch (e) { /* retry */ }
-}
-
-async function analyzeDirectory() {
-    const pathInput = document.getElementById('analyzePath');
-    const results = document.getElementById('analyzerResults');
-    const path = pathInput?.value?.trim();
-
-    if (!path) {
-        showToast('Please enter a path', 'warning');
-        return;
+            } catch (err) {
+                resultsContainer.innerHTML = `<p style="color: var(--status-critical);">Error running analyzer: ${err.message}</p>`;
+            }
+        });
     }
 
-    results.innerHTML = '<div class="loading-container"><div class="spinner"></div> Analyzing...</div>';
-
-    try {
-        const resp = await fetch(`/api/disk/analyze?path=${encodeURIComponent(path)}`);
-        const json = await resp.json();
-
-        if (!json.success) {
-            results.innerHTML = `<div class="empty-state"><div class="empty-state-icon">❌</div><div class="empty-state-text">${json.error || 'Analysis failed'}</div></div>`;
-            return;
-        }
-
-        const data = json.data;
-        if (data.error) {
-            results.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">${data.error}</div></div>`;
-            return;
-        }
-
-        const items = data.items || [];
-        if (items.length === 0) {
-            results.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-text">No items found</div></div>';
-            return;
-        }
-
-        const maxSize = items[0]?.size || 1;
-        results.innerHTML = `
-            <div style="margin-bottom:12px;font-size:0.82rem;color:var(--text-secondary);">
-                Total: <strong>${data.total_size_fmt}</strong> — Showing top ${items.length} items
-            </div>
-            ${items.map(item => `
-                <div class="analyzer-row">
-                    <span class="analyzer-icon">${item.type === 'folder' ? '📁' : '📄'}</span>
-                    <span class="analyzer-name" title="${item.path}">${item.name}</span>
-                    <span class="analyzer-size">${item.size_fmt}</span>
-                    <div class="analyzer-bar">
-                        <div class="analyzer-bar-fill" style="width:${Math.round((item.size / maxSize) * 100)}%"></div>
-                    </div>
-                </div>
-            `).join('')}
-        `;
-    } catch (e) {
-        results.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❌</div><div class="empty-state-text">Failed to analyze directory</div></div>';
-    }
-}
+    initChart();
+    fetchDiskTelemetry();
+    setInterval(fetchDiskTelemetry, 2000);
+});

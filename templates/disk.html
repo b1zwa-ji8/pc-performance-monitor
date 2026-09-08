@@ -1,67 +1,108 @@
 {% extends "base.html" %}
-{% block title %}Disk — PC Monitor{% endblock %}
+{% block title %}Disk Telemetry — Personal PC Performance Monitor{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div>
-        <h1 class="page-title"><span class="page-title-icon">💿</span> Disk</h1>
-        <p class="page-subtitle">Storage and I/O activity</p>
-    </div>
-</div>
+<div class="detail-page-wrapper">
+    <div class="detail-split-shell">
+        <!-- Left Hero Pane (~38%) -->
+        <div class="detail-left-pane">
+            <svg class="hero-ambient-svg" id="heroAmbientSvg" viewBox="0 0 800 300" preserveAspectRatio="none"></svg>
+            <div class="hero-ambient-overlay"></div>
 
-<!-- I/O Stats -->
-<div class="stats-row mb-20">
-    <div class="stat-item">
-        <div class="stat-value" id="diskRead" style="color:var(--accent-green);">—</div>
-        <div class="stat-label">Read Speed</div>
-    </div>
-    <div class="stat-item">
-        <div class="stat-value" id="diskWrite" style="color:var(--accent-orange);">—</div>
-        <div class="stat-label">Write Speed</div>
-    </div>
-</div>
+            <div class="detail-hero-content">
+                <div class="hero-header-eyebrow">Hardware Telemetry</div>
+                <h1 class="detail-title">Storage &amp; I/O</h1>
+                <p class="detail-subtitle" id="diskSubtitle">Drives &amp; file system throughput</p>
 
-<!-- I/O Chart -->
-<div class="card mb-20">
-    <div class="card-header">
-        <span class="card-title">📈 Disk I/O Activity</span>
-    </div>
-    <div class="chart-container">
-        <canvas id="diskIOChart"></canvas>
-    </div>
-</div>
+                <div class="detail-primary-stat">
+                    <span class="detail-big-number" id="primaryDiskPercent">0</span>
+                    <span class="detail-stat-unit">% Primary Used</span>
+                </div>
+            </div>
 
-<!-- Partitions -->
-<div class="card mb-20">
-    <div class="card-header">
-        <span class="card-title">💿 Partitions</span>
-    </div>
-    <div class="grid-2" id="partitionGrid">
-        <!-- Filled by JS -->
-    </div>
-</div>
-
-<!-- Directory Analyzer -->
-<div class="card">
-    <div class="card-header">
-        <span class="card-title">🔍 Storage Analyzer</span>
-    </div>
-    <div class="flex gap-12 mb-16">
-        <div class="search-box" style="flex:1;max-width:400px;">
-            <span class="search-icon">📂</span>
-            <input type="text" class="form-input" id="analyzePath" placeholder="Enter path (e.g., C:\)" value="C:\">
+            <!-- Floating Control Panel -->
+            <div class="floating-control-panel">
+                <div class="panel-pill-row">
+                    <div class="panel-tabs-list">
+                        <a href="/" class="panel-pill-tab">Overview</a>
+                        <a href="/cpu" class="panel-pill-tab">CPU</a>
+                        <a href="/memory" class="panel-pill-tab">Memory</a>
+                        <a href="/disk" class="panel-pill-tab active">Disk</a>
+                        <a href="/network" class="panel-pill-tab">Network</a>
+                        <a href="/gpu" class="panel-pill-tab">GPU</a>
+                    </div>
+                </div>
+                <div class="panel-summary-row">
+                    <span class="panel-summary-text" id="diskSummaryText">Analyzing volume allocations and read/write speeds...</span>
+                </div>
+            </div>
         </div>
-        <button class="btn btn-primary" id="analyzeBtn">Analyze</button>
-    </div>
-    <div id="analyzerResults">
-        <div class="empty-state">
-            <div class="empty-state-icon">🔍</div>
-            <div class="empty-state-text">Enter a path and click Analyze to scan for large files and folders</div>
+
+        <!-- Right Pane: Sub-nodes & Analyzer -->
+        <div class="detail-right-pane dot-grid-bg" id="diskCanvasContainer">
+            <svg class="connector-layer canvas-connectors-svg" id="canvasConnectorsSvg"></svg>
+
+            <!-- Anchor Hub -->
+            <div class="canvas-hub-node" id="diskHubNode" style="margin-bottom: 24px;">
+                <div class="hub-mark"></div>
+                <div>
+                    <div class="hub-label">Storage Hub</div>
+                    <div class="hub-specs" id="diskPartCount">Detecting volumes...</div>
+                </div>
+            </div>
+
+            <!-- Disk I/O Sub-Nodes -->
+            <div class="subnodes-grid" id="diskSpecsGrid">
+                <!-- Injected by disk.js (Read Speed, Write Speed, etc.) -->
+            </div>
+
+            <!-- Partition Volumes Grid -->
+            <div class="card-dark">
+                <div class="card-header-clean">
+                    <h3>Mounted Volumes &amp; Partitions</h3>
+                    <span class="eyebrow-label">Partitions</span>
+                </div>
+                <div class="subnodes-grid" id="partitionGrid">
+                    <!-- Injected by disk.js -->
+                </div>
+            </div>
+
+            <!-- Real-time Disk I/O Chart -->
+            <div class="card-dark">
+                <div class="card-header-clean">
+                    <h3>Disk I/O Throughput</h3>
+                    <span class="eyebrow-label">Real-Time</span>
+                </div>
+                <div style="height: 240px; width: 100%;">
+                    <div id="diskIOChart" style="width: 100%; height: 100%;"></div>
+                </div>
+            </div>
+
+            <!-- Directory Storage Analyzer -->
+            <div class="card-dark">
+                <div class="card-header-clean">
+                    <h3>Directory Storage Analyzer</h3>
+                    <span class="eyebrow-label">Diagnostics</span>
+                </div>
+                <div style="display: flex; gap: 12px; margin-bottom: 20px; align-items: center;">
+                    <div class="search-input-pill" style="width: 320px;">
+                        <span>📁</span>
+                        <input type="text" id="analyzePath" placeholder="C:\" value="C:\">
+                    </div>
+                    <button class="btn btn-primary" id="analyzeBtn">Analyze Folder</button>
+                </div>
+                <div id="analyzerResults">
+                    <p style="color: var(--text-on-dark-muted); font-size: 0.88rem;">
+                        Enter an absolute folder path and click <strong>Analyze Folder</strong> to examine space hogs.
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
 <script src="{{ url_for('static', filename='js/disk.js') }}"></script>
 {% endblock %}

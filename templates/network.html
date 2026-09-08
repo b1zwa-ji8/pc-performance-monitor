@@ -1,60 +1,98 @@
 {% extends "base.html" %}
-{% block title %}Network — PC Monitor{% endblock %}
+{% block title %}Network Telemetry — Personal PC Performance Monitor{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div>
-        <h1 class="page-title"><span class="page-title-icon">🌐</span> Network</h1>
-        <p class="page-subtitle">Upload and download activity</p>
-    </div>
-</div>
+<div class="detail-page-wrapper">
+    <div class="detail-split-shell">
+        <!-- Left Hero Pane (~38%) -->
+        <div class="detail-left-pane">
+            <svg class="hero-ambient-svg" id="heroAmbientSvg" viewBox="0 0 800 300" preserveAspectRatio="none"></svg>
+            <div class="hero-ambient-overlay"></div>
 
-<div class="stats-row mb-20">
-    <div class="stat-item">
-        <div class="stat-value" id="netUpSpeed" style="color:var(--accent-green);">—</div>
-        <div class="stat-label">Upload</div>
-    </div>
-    <div class="stat-item">
-        <div class="stat-value" id="netDownSpeed" style="color:var(--accent-blue);">—</div>
-        <div class="stat-label">Download</div>
-    </div>
-    <div class="stat-item">
-        <div class="stat-value" id="netConnections">—</div>
-        <div class="stat-label">Connections</div>
-    </div>
-</div>
+            <div class="detail-hero-content">
+                <div class="hero-header-eyebrow">Hardware Telemetry</div>
+                <h1 class="detail-title">Network I/O</h1>
+                <p class="detail-subtitle" id="netSubtitle">Active interfaces &amp; socket streams</p>
 
-<div class="card mb-20">
-    <div class="card-header">
-        <span class="card-title">📈 Network Activity</span>
-    </div>
-    <div class="chart-container large">
-        <canvas id="netChart"></canvas>
-    </div>
-</div>
+                <div class="detail-primary-stat">
+                    <span class="detail-big-number" id="netDownHero">0</span>
+                    <span class="detail-stat-unit" id="netDownHeroUnit">KB/s Inflow</span>
+                </div>
+            </div>
 
-<!-- History -->
-<div class="card">
-    <div class="card-header">
-        <span class="card-title">📋 Historical Data</span>
-        <div class="tabs" id="netHistoryTabs">
-            <button class="tab active" data-range="1h">1H</button>
-            <button class="tab" data-range="6h">6H</button>
-            <button class="tab" data-range="24h">24H</button>
-            <button class="tab" data-range="7d">7D</button>
+            <!-- Floating Control Panel -->
+            <div class="floating-control-panel">
+                <div class="panel-pill-row">
+                    <div class="panel-tabs-list">
+                        <a href="/" class="panel-pill-tab">Overview</a>
+                        <a href="/cpu" class="panel-pill-tab">CPU</a>
+                        <a href="/memory" class="panel-pill-tab">Memory</a>
+                        <a href="/disk" class="panel-pill-tab">Disk</a>
+                        <a href="/network" class="panel-pill-tab active">Network</a>
+                        <a href="/gpu" class="panel-pill-tab">GPU</a>
+                    </div>
+                </div>
+                <div class="panel-summary-row">
+                    <span class="panel-summary-text" id="netSummaryText">Tracking real-time bandwidth consumption...</span>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="stats-row mb-16">
-        <div class="stat-item"><div class="stat-value" id="netAvg">—</div><div class="stat-label">Avg Download</div></div>
-        <div class="stat-item"><div class="stat-value" id="netMin">—</div><div class="stat-label">Min</div></div>
-        <div class="stat-item"><div class="stat-value" id="netMax">—</div><div class="stat-label">Max</div></div>
-    </div>
-    <div class="chart-container">
-        <canvas id="netHistoryChart"></canvas>
+
+        <!-- Right Pane: Sub-nodes & Charts -->
+        <div class="detail-right-pane dot-grid-bg" id="netCanvasContainer">
+            <svg class="connector-layer canvas-connectors-svg" id="canvasConnectorsSvg"></svg>
+
+            <!-- Anchor Hub -->
+            <div class="canvas-hub-node" id="netHubNode" style="margin-bottom: 24px;">
+                <div class="hub-mark"></div>
+                <div>
+                    <div class="hub-label">Network Interface Hub</div>
+                    <div class="hub-specs" id="netConnSpec">0 Active Sockets</div>
+                </div>
+            </div>
+
+            <!-- Network Sub-Nodes -->
+            <div class="subnodes-grid" id="netSpecsGrid">
+                <!-- Injected by network.js (Download, Upload, Sockets) -->
+            </div>
+
+            <!-- Real-Time Activity Chart -->
+            <div class="card-dark">
+                <div class="card-header-clean">
+                    <h3>Bandwidth Activity (Download vs Upload)</h3>
+                    <span class="eyebrow-label">Real-Time</span>
+                </div>
+                <div style="height: 240px; width: 100%;">
+                    <div id="netChart" style="width: 100%; height: 100%;"></div>
+                </div>
+            </div>
+
+            <!-- Historical Data -->
+            <div class="card-dark">
+                <div class="card-header-clean">
+                    <h3>Historical Download Throughput</h3>
+                    <div class="editorial-pill-row" id="netHistoryTabs" style="margin-bottom: 0;">
+                        <button class="editorial-pill-btn active" data-range="1h">1H</button>
+                        <button class="editorial-pill-btn" data-range="6h">6H</button>
+                        <button class="editorial-pill-btn" data-range="24h">24H</button>
+                        <button class="editorial-pill-btn" data-range="7d">7D</button>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 24px; margin-bottom: 16px; font-size: 0.88rem; color: var(--text-on-dark-muted);">
+                    <div>Average: <strong id="netAvg" style="color: var(--text-on-dark);">—</strong></div>
+                    <div>Minimum: <strong id="netMin" style="color: var(--text-on-dark);">—</strong></div>
+                    <div>Maximum: <strong id="netMax" style="color: var(--text-on-dark);">—</strong></div>
+                </div>
+                <div style="height: 240px; width: 100%;">
+                    <div id="netHistoryChart" style="width: 100%; height: 100%;"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
 <script src="{{ url_for('static', filename='js/network.js') }}"></script>
 {% endblock %}
