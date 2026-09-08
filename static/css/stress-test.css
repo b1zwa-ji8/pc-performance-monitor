@@ -1,0 +1,602 @@
+/**
+ * GPU Stress Test — Scoped Stylesheet
+ * Integrates seamlessly with Melius tokens and design system.
+ */
+
+.stress-test-page {
+    min-height: calc(100vh - 100px);
+    padding: 40px 32px 80px;
+    position: relative;
+}
+
+.stress-container {
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+/* ── Safety Warning Banner ────────────────────────────────────────────────── */
+.stress-warning-card {
+    background: linear-gradient(135deg, rgba(245, 185, 66, 0.08) 0%, rgba(232, 68, 44, 0.05) 100%);
+    border: 1px solid rgba(245, 185, 66, 0.25);
+    border-radius: var(--radius-card);
+    padding: 16px 24px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    backdrop-filter: blur(8px);
+}
+
+.stress-warning-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    min-width: 280px;
+}
+
+.stress-warning-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(245, 185, 66, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--status-warning);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.stress-warning-title {
+    font-weight: 600;
+    color: var(--text-on-dark);
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+}
+
+.stress-warning-desc {
+    font-size: 0.84rem;
+    color: var(--text-on-dark-muted);
+    line-height: 1.4;
+}
+
+.stress-safety-badge {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--status-normal);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stress-safety-badge.abort-active {
+    color: var(--status-critical);
+    border-color: rgba(232, 68, 44, 0.4);
+    background: rgba(232, 68, 44, 0.1);
+    animation: pulse-danger 1.5s infinite;
+}
+
+@keyframes pulse-danger {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(232, 68, 44, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(232, 68, 44, 0); }
+}
+
+/* ── Control Configuration Bar ────────────────────────────────────────────── */
+.stress-control-bar {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-panel);
+    padding: 22px 28px;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow-panel);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 24px;
+}
+
+.stress-control-group {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex-wrap: wrap;
+}
+
+.stress-control-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.stress-control-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-on-dark-muted);
+    font-weight: 600;
+}
+
+.stress-action-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.stress-btn-start {
+    padding: 12px 36px;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    border-radius: var(--radius-pill);
+    background: linear-gradient(135deg, var(--accent-primary) 0%, #ff5e3a 100%);
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(232, 68, 44, 0.35);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.stress-btn-start:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(232, 68, 44, 0.5);
+}
+
+.stress-btn-start:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.stress-btn-stop {
+    padding: 12px 28px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: var(--radius-pill);
+    background: rgba(232, 68, 44, 0.15);
+    color: var(--accent-primary);
+    border: 1px solid rgba(232, 68, 44, 0.4);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+.stress-btn-stop:hover {
+    background: var(--accent-primary);
+    color: #ffffff;
+}
+
+/* ── WebGL Canvas Stage ───────────────────────────────────────────────────── */
+.stress-stage-card {
+    background: #000000;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-panel);
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--shadow-panel);
+    margin-bottom: 28px;
+}
+
+.stress-stage-card.fullscreen-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    border-radius: 0;
+    margin: 0;
+}
+
+.stress-canvas-wrapper {
+    position: relative;
+    width: 100%;
+    height: 540px;
+    background: radial-gradient(circle at center, #121217 0%, #060608 100%);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stress-stage-card.fullscreen-mode .stress-canvas-wrapper {
+    height: 100vh;
+}
+
+#stressGlCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Canvas Idle Placeholder */
+.stress-idle-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center, rgba(20, 20, 24, 0.85) 0%, rgba(10, 10, 12, 0.95) 100%);
+    backdrop-filter: blur(4px);
+    z-index: 5;
+    text-align: center;
+    padding: 24px;
+    transition: opacity 0.3s ease;
+}
+
+.stress-idle-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.stress-idle-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(232, 68, 44, 0.1);
+    border: 1px solid rgba(232, 68, 44, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-primary);
+    margin-bottom: 16px;
+}
+
+.stress-idle-title {
+    font-family: var(--font-serif);
+    font-size: 1.6rem;
+    color: var(--text-on-dark);
+    margin-bottom: 8px;
+}
+
+.stress-idle-subtitle {
+    font-size: 0.92rem;
+    color: var(--text-on-dark-muted);
+    max-width: 460px;
+}
+
+/* Canvas Floating Telemetry HUD */
+.stress-hud {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    background: rgba(14, 14, 18, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-card);
+    padding: 14px 18px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.stress-hud-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.stress-hud-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-on-dark-muted);
+    font-weight: 600;
+}
+
+.stress-hud-val {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-on-dark);
+    line-height: 1.2;
+    margin-top: 2px;
+}
+
+.stress-hud-val.fps-good { color: var(--status-normal); }
+.stress-hud-val.fps-warn { color: var(--status-warning); }
+.stress-hud-val.fps-bad { color: var(--status-critical); }
+.stress-hud-val.temp-hot { color: var(--status-critical); }
+
+/* Canvas Action Controls (Top Right) */
+.stress-canvas-tools {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 10;
+    display: flex;
+    gap: 10px;
+}
+
+.stress-tool-btn {
+    background: rgba(14, 14, 18, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    color: var(--text-on-dark);
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.stress-tool-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+/* Progress / Countdown Bar */
+.stress-countdown-track {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.stress-countdown-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--status-normal) 0%, var(--accent-primary) 100%);
+    transition: width 0.3s linear;
+}
+
+/* ── Live Correlation Chart ───────────────────────────────────────────────── */
+.stress-chart-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-panel);
+    padding: 24px 28px;
+    margin-bottom: 32px;
+    box-shadow: var(--shadow-panel);
+}
+
+.stress-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.stress-chart-title {
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    color: var(--text-on-dark);
+}
+
+.stress-chart-legend {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    font-size: 0.82rem;
+    color: var(--text-on-dark-muted);
+}
+
+.legend-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.stress-chart-wrapper {
+    position: relative;
+    height: 320px;
+    width: 100%;
+}
+
+/* ── Post-Test Results Report Section ─────────────────────────────────────── */
+.stress-results-section {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-panel);
+    padding: 32px;
+    margin-bottom: 32px;
+    box-shadow: var(--shadow-panel);
+    display: none;
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.stress-results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.stress-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.stress-stat-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.stress-stat-card.featured {
+    background: linear-gradient(135deg, rgba(232, 68, 44, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border-color: rgba(232, 68, 44, 0.3);
+}
+
+.stress-stat-title {
+    font-size: 0.78rem;
+    color: var(--text-on-dark-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.stress-stat-val {
+    font-family: var(--font-mono);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-on-dark);
+    margin-top: 4px;
+}
+
+.stress-stat-sub {
+    font-size: 0.76rem;
+    color: var(--text-on-dark-muted);
+    margin-top: 4px;
+}
+
+.stress-abort-banner {
+    background: rgba(232, 68, 44, 0.15);
+    border: 1px solid rgba(232, 68, 44, 0.4);
+    border-radius: var(--radius-card);
+    padding: 14px 20px;
+    margin-bottom: 24px;
+    display: none;
+    align-items: center;
+    gap: 14px;
+    color: #ff8577;
+    font-size: 0.92rem;
+}
+
+/* ── History Table ────────────────────────────────────────────────────────── */
+.stress-history-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-panel);
+    padding: 24px 28px;
+    box-shadow: var(--shadow-panel);
+}
+
+.stress-history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.stress-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.stress-table th {
+    padding: 12px 16px;
+    text-align: left;
+    color: var(--text-on-dark-muted);
+    border-bottom: 1px solid var(--border-subtle);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.stress-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    color: var(--text-on-dark);
+    font-family: var(--font-sans);
+}
+
+.stress-table td.mono {
+    font-family: var(--font-mono);
+}
+
+.stress-table tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.tag-preset {
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--text-on-dark);
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.tag-preset.low { background: rgba(52, 199, 123, 0.15); color: var(--status-normal); }
+.tag-preset.medium { background: rgba(245, 217, 73, 0.15); color: var(--accent-secondary); }
+.tag-preset.high { background: rgba(245, 185, 66, 0.15); color: var(--status-warning); }
+.tag-preset.extreme { background: rgba(232, 68, 44, 0.2); color: var(--accent-primary); }
+
+.tag-status-aborted {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: rgba(232, 68, 44, 0.2);
+    color: var(--status-critical);
+    font-weight: 600;
+}
+
+.tag-status-ok {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: rgba(52, 199, 123, 0.15);
+    color: var(--status-normal);
+    font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    .stress-hud {
+        grid-template-columns: repeat(2, 1fr);
+        top: 10px;
+        left: 10px;
+        padding: 10px 14px;
+        gap: 12px;
+    }
+    .stress-canvas-wrapper {
+        height: 420px;
+    }
+}
+
+@media (max-width: 600px) {
+    .stress-test-page {
+        padding: 24px 16px 60px;
+    }
+    .stress-hud {
+        position: relative;
+        top: auto;
+        left: auto;
+        border-radius: 0;
+        width: 100%;
+    }
+    .stress-canvas-wrapper {
+        height: 320px;
+    }
+}
