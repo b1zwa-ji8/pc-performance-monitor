@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block title %}GPU Stress Test &amp; Thermal Stability — Personal PC Performance Monitor{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stress-test.css') }}">
+
+<div class="stress-test-page dot-grid-bg">
+    <div class="stress-container">
+
+        <!-- Safety Pre-Test Warning Banner -->
+        <div class="stress-warning-card" id="stressWarningBanner">
+            <div class="stress-warning-left">
+                <div class="stress-warning-icon">⚠</div>
+                <div>
+                    <div class="stress-warning-title">High-Load GPU Stress Test &amp; Thermal Verification</div>
+                    <div class="stress-warning-desc">
+                        Renders demanding volumetric raymarching shaders directly on your GPU to evaluate sustained frame rates and cooling headroom.
+                        Opt-in only — testing never runs automatically.
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <div class="stress-safety-badge" id="safetyBadge">
+                    <span style="font-size: 0.9rem;">🛡</span>
+                    <span>Safety Auto-Abort: <strong id="safetyThresholdText">85°C</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Header -->
+        <div style="margin-bottom: 28px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <div class="eyebrow-label" style="color: var(--accent-primary); margin-bottom: 6px;">WebGL2 Volumetric Raymarching Engine</div>
+                <h1 class="serif-display" style="font-size: 2.6rem; color: var(--text-on-dark); margin: 0;">GPU Stress Test &amp; Frame Stability</h1>
+                <p style="color: var(--text-on-dark-muted); font-size: 0.95rem; margin-top: 6px; max-width: 820px;">
+                    Correlate custom procedural 3D raymarching visual load against real-time hardware telemetry (GPU core temp, VRAM usage, clock frequency, and CPU load).
+                </p>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <span id="gpuStatusBadge" class="editorial-pill-btn" style="cursor: default; padding: 6px 16px; font-size: 0.84rem;">
+                    Detecting GPU...
+                </span>
+            </div>
+        </div>
+
+        <!-- Safety Cutoff Alert (Shown dynamically if threshold triggered) -->
+        <div class="stress-abort-banner" id="safetyAbortAlert">
+            <span style="font-size: 1.4rem;">🛑</span>
+            <div>
+                <strong>SAFETY AUTO-ABORT ACTIVATED:</strong>
+                <span id="safetyAbortMessage">GPU temperature reached the safety limit. Test stopped immediately to prevent thermal stress.</span>
+            </div>
+        </div>
+
+        <!-- Test Configuration & Control Bar -->
+        <div class="stress-control-bar">
+            <div class="stress-control-group">
+                <!-- Quality Preset Selector -->
+                <div class="stress-control-item">
+                    <span class="stress-control-label">Shader Complexity Preset</span>
+                    <div class="editorial-pill-row" id="presetTabs" style="margin-bottom: 0;">
+                        <button class="editorial-pill-btn" data-preset="low" title="0.5x resolution, 32 raymarch steps">Low</button>
+                        <button class="editorial-pill-btn active" data-preset="medium" title="0.75x resolution, 64 raymarch steps">Medium</button>
+                        <button class="editorial-pill-btn" data-preset="high" title="1.0x native resolution, 96 raymarch steps">High</button>
+                        <button class="editorial-pill-btn" data-preset="extreme" title="1.25x supersampled, 160 raymarch steps">Extreme</button>
+                    </div>
+                </div>
+
+                <!-- Test Duration Selector -->
+                <div class="stress-control-item" style="border-left: 1px solid var(--border-subtle); padding-left: 20px;">
+                    <span class="stress-control-label">Test Duration</span>
+                    <div class="editorial-pill-row" id="durationTabs" style="margin-bottom: 0;">
+                        <button class="editorial-pill-btn active" data-duration="30">30s</button>
+                        <button class="editorial-pill-btn" data-duration="60">1m</button>
+                        <button class="editorial-pill-btn" data-duration="300">5m</button>
+                        <button class="editorial-pill-btn" data-duration="0">Until Stopped</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Start / Stop Actions -->
+            <div class="stress-action-group">
+                <button class="stress-btn-stop" id="stopStressBtn">
+                    <span>■</span>
+                    <span>Stop Stress Test</span>
+                </button>
+                <button class="stress-btn-start" id="startStressBtn">
+                    <span>▶</span>
+                    <span>Start Stress Test</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- WebGL2 Raymarching Canvas Stage -->
+        <div class="stress-stage-card" id="stressStageCard">
+            <!-- Floating Live Telemetry HUD -->
+            <div class="stress-hud" id="stressHud">
+                <div class="stress-hud-item">
+                    <span class="stress-hud-label">Rendering FPS</span>
+                    <span class="stress-hud-val fps-good" id="hudFps">—</span>
+                </div>
+                <div class="stress-hud-item">
+                    <span class="stress-hud-label">Frame Time</span>
+                    <span class="stress-hud-val" id="hudFrameTime">—</span>
+                </div>
+                <div class="stress-hud-item">
+                    <span class="stress-hud-label">GPU Temp</span>
+                    <span class="stress-hud-val" id="hudGpuTemp">—</span>
+                </div>
+                <div class="stress-hud-item">
+                    <span class="stress-hud-label">GPU Load / Clock</span>
+                    <span class="stress-hud-val" id="hudGpuLoadClock">—</span>
+                </div>
+            </div>
+
+            <!-- Canvas Tool Buttons (Fullscreen toggle, etc.) -->
+            <div class="stress-canvas-tools">
+                <button class="stress-tool-btn" id="canvasFullscreenBtn" title="Toggle Fullscreen Canvas">
+                    <span id="fsIcon">⛶</span>
+                    <span id="fsText">Fullscreen</span>
+                </button>
+            </div>
+
+            <!-- Canvas Wrapper -->
+            <div class="stress-canvas-wrapper" id="canvasWrapper">
+                <!-- Idle State Placeholder Overlay -->
+                <div class="stress-idle-overlay" id="idleOverlay">
+                    <div class="stress-idle-icon">⚡</div>
+                    <div class="stress-idle-title">WebGL2 Raymarching Engine Ready</div>
+                    <div class="stress-idle-subtitle">
+                        Select a shader preset and duration above, then click <strong>"Start Stress Test"</strong> to begin rendering the real-time volumetric noise field.
+                    </div>
+                </div>
+
+                <canvas id="stress-canvas"></canvas>
+            </div>
+
+            <!-- Countdown / Elapsed Progress Track -->
+            <div class="stress-countdown-track">
+                <div class="stress-countdown-fill" id="countdownFill"></div>
+            </div>
+        </div>
+
+        <!-- Real-Time Hardware Correlation Chart -->
+        <div class="stress-chart-card">
+            <div class="stress-chart-header">
+                <div>
+                    <h3 class="stress-chart-title">Live Hardware Correlation Timeline</h3>
+                    <p style="font-size: 0.82rem; color: var(--text-on-dark-muted); margin-top: 2px;">
+                        Tracks real-time client FPS alongside sensor telemetry (GPU Temp, GPU Utilization, and VRAM) on synchronized dual Y-axes.
+                    </p>
+                </div>
+                <div class="stress-chart-legend">
+                    <span><span class="legend-dot" style="background: #34c77b;"></span>Client FPS</span>
+                    <span><span class="legend-dot" style="background: #e8442c;"></span>GPU Temp (°C)</span>
+                    <span><span class="legend-dot" style="background: #f5b942;"></span>GPU Load (%)</span>
+                    <span><span class="legend-dot" style="background: #6366f1;"></span>VRAM (GB)</span>
+                </div>
+            </div>
+            <div class="stress-chart-wrapper">
+                <canvas id="stressLiveChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Post-Test Results Report Section -->
+        <div class="stress-results-section" id="stressResultsSection">
+            <div class="stress-results-header">
+                <div>
+                    <div class="eyebrow-label" style="color: var(--status-normal);" id="resultsStatusEyebrow">Test Completed</div>
+                    <h2 class="serif-display" style="font-size: 2.2rem; color: var(--text-on-dark); margin: 4px 0 0;" id="resultsHeading">
+                        Performance &amp; Stability Score
+                    </h2>
+                    <p style="color: var(--text-on-dark-muted); font-size: 0.9rem; margin-top: 4px;" id="resultsSubtext">
+                        Detailed benchmark analysis of frame pacing, thermal response, and GPU stability.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-ghost" id="resultsExportBtn" style="padding: 8px 18px; font-size: 0.85rem;">
+                        Export JSON
+                    </button>
+                    <button class="btn btn-primary" id="resultsRetestBtn" style="padding: 8px 20px; font-size: 0.85rem;">
+                        Run Another Test
+                    </button>
+                </div>
+            </div>
+
+            <!-- Score / Metrics Cards Grid -->
+            <div class="stress-results-grid">
+                <div class="stress-stat-card featured">
+                    <span class="stress-stat-title">Stability Score</span>
+                    <span class="stress-stat-val" id="statStability">—</span>
+                    <span class="stress-stat-sub">Frame time consistency %</span>
+                </div>
+                <div class="stress-stat-card">
+                    <span class="stress-stat-title">Average FPS</span>
+                    <span class="stress-stat-val" id="statAvgFps">—</span>
+                    <span class="stress-stat-sub">Sustained throughput</span>
+                </div>
+                <div class="stress-stat-card">
+                    <span class="stress-stat-title">1% Low FPS</span>
+                    <span class="stress-stat-val" id="statOnePercentLow">—</span>
+                    <span class="stress-stat-sub">Stutter resistance metric</span>
+                </div>
+                <div class="stress-stat-card">
+                    <span class="stress-stat-title">Minimum FPS</span>
+                    <span class="stress-stat-val" id="statMinFps">—</span>
+                    <span class="stress-stat-sub">Lowest recorded point</span>
+                </div>
+                <div class="stress-stat-card">
+                    <span class="stress-stat-title">Peak GPU Temp</span>
+                    <span class="stress-stat-val" id="statPeakTemp">—</span>
+                    <span class="stress-stat-sub" id="statPeakTempLimit">Cutoff limit: 85°C</span>
+                </div>
+                <div class="stress-stat-card">
+                    <span class="stress-stat-title">Peak GPU Load</span>
+                    <span class="stress-stat-val" id="statPeakLoad">—</span>
+                    <span class="stress-stat-sub">Maximum core utilization</span>
+                </div>
+                <div class="stress-stat-card">
+                    <span class="stress-stat-title">Peak VRAM Used</span>
+                    <span class="stress-stat-val" id="statPeakVram">—</span>
+                    <span class="stress-stat-sub" id="statVramTotal">Total: —</span>
+                </div>
+            </div>
+
+            <!-- Post-Test Timeline Chart -->
+            <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--border-subtle); border-radius: var(--radius-card); padding: 20px; margin-top: 10px;">
+                <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-on-dark); margin-bottom: 14px;">
+                    Test Run Dual-Axis Profile: FPS vs. Thermal Curve
+                </div>
+                <div style="height: 280px; width: 100%; position: relative;">
+                    <canvas id="stressResultsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stress Test History Table -->
+        <div class="stress-history-card">
+            <div class="stress-history-header">
+                <div>
+                    <h3 style="font-family: var(--font-serif); font-size: 1.35rem; color: var(--text-on-dark); margin: 0;">
+                        Stress Test History
+                    </h3>
+                    <p style="font-size: 0.82rem; color: var(--text-on-dark-muted); margin-top: 4px;">
+                        Historical runs saved locally in SQLite database.
+                    </p>
+                </div>
+                <button class="btn btn-ghost" id="refreshHistoryBtn" style="padding: 6px 14px; font-size: 0.8rem;">
+                    ↻ Refresh
+                </button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="stress-table">
+                    <thead>
+                        <tr>
+                            <th>Date &amp; Time</th>
+                            <th>Preset</th>
+                            <th>Duration</th>
+                            <th>Avg FPS</th>
+                            <th>1% Low</th>
+                            <th>Stability</th>
+                            <th>Peak Temp</th>
+                            <th>Peak Load</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stressHistoryTableBody">
+                        <tr>
+                            <td colspan="10" style="text-align: center; padding: 24px; color: var(--text-on-dark-muted);">
+                                Loading test history...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/stress-test.js') }}"></script>
+{% endblock %}
