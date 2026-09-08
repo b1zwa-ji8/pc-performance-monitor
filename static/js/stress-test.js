@@ -149,12 +149,14 @@ console.log("[STRESS-TEST] module loaded");
         gl_Position = vec4(a_position, 0.0, 1.0);
     }`;
 
-    // Stage 1: Solid Red Quad
+    // Stage 2: Animated Gradient with u_time
     const FS_SOURCE = `#version 300 es
     precision highp float;
+    in vec2 v_uv;
+    uniform float u_time;
     out vec4 fragColor;
     void main() {
-        fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        fragColor = vec4(v_uv.x, v_uv.y, 0.5 + 0.5 * sin(u_time), 1.0);
     }`;
 
     // ── WebGL2 Engine Initialization ──────────────────────────────────────────
