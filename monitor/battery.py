@@ -25,11 +25,14 @@ def get_battery():
 
         # Calculate time left
         time_left = battery.secsleft
-        if time_left == psutil.POWER_TIME_UNLIMITED:
+        if time_left == psutil.POWER_TIME_UNLIMITED or (battery.power_plugged and battery.percent >= 99):
+            time_left_fmt = 'Fully Charged' if battery.percent >= 99 else 'Plugged In'
+            time_left = -1
+        elif battery.power_plugged:
             time_left_fmt = 'Charging'
             time_left = -1
-        elif time_left == psutil.POWER_TIME_UNKNOWN:
-            time_left_fmt = 'Unknown'
+        elif time_left == psutil.POWER_TIME_UNKNOWN or time_left < 0 or time_left >= 86400 * 7 or time_left == 4294967295:
+            time_left_fmt = 'Calculating...'
             time_left = -2
         else:
             hours = time_left // 3600

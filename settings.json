@@ -1,5 +1,5 @@
 {
-  "refresh_interval": 1,
+  "refresh_interval": 2,
   "cpu_warning": 90,
   "ram_warning": 90,
   "disk_warning": 90,

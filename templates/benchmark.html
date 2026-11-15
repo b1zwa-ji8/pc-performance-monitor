@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}Benchmark &amp; Frame Analysis — Personal PC Performance Monitor{% endblock %}
+
+{% block content %}
+<div class="dot-grid-bg" style="min-height: calc(100vh - 100px); padding: 48px 32px;">
+    <div style="max-width: 1240px; margin: 0 auto;">
+
+        <!-- Header -->
+        <div style="margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <div class="eyebrow-label" style="color: var(--accent-primary); margin-bottom: 8px;">Intel PresentMon ETW Engine</div>
+                <h1 class="serif-display" style="font-size: 2.8rem; color: var(--text-on-dark);">Hardware Benchmarking &amp; Frame-Time Analysis</h1>
+                <p style="color: var(--text-on-dark-muted); font-size: 0.98rem; margin-top: 4px;">
+                    Capture kernel-level frame intervals, 1% lows, and hardware load simultaneously without DLL injection or anti-cheat conflicts.
+                </p>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <span id="pmStatusBadge" class="editorial-pill-btn" style="cursor: default; padding: 6px 14px; font-size: 0.8rem;">
+                    Checking PresentMon...
+                </span>
+            </div>
+        </div>
+
+        <!-- Benchmark Configuration & Control Bar -->
+        <div class="card-dark" style="margin-bottom: 32px; padding: 24px 28px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                    <div>
+                        <div style="font-size: 0.82rem; color: var(--text-on-dark-muted); margin-bottom: 6px;">Capture Duration</div>
+                        <div class="editorial-pill-row" id="benchDurationTabs" style="margin-bottom: 0;">
+                            <button class="editorial-pill-btn" data-dur="10">10s</button>
+                            <button class="editorial-pill-btn active" data-dur="30">30s</button>
+                            <button class="editorial-pill-btn" data-dur="60">60s</button>
+                            <button class="editorial-pill-btn" data-dur="120">120s</button>
+                        </div>
+                    </div>
+
+                    <div style="border-left: 1px solid rgba(255,255,255,0.08); padding-left: 20px;">
+                        <div style="font-size: 0.82rem; color: var(--text-on-dark-muted); margin-bottom: 4px;">Target Workload</div>
+                        <div id="targetAppText" style="font-weight: 500; font-size: 0.95rem; color: #a5b4fc;">
+                            Scanning foreground window...
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 14px; align-items: center;">
+                    <button class="btn btn-ghost" id="benchStopBtn" style="display: none; color: var(--status-critical); border-color: rgba(232,68,44,0.3);">
+                        Cancel Run
+                    </button>
+                    <button class="btn btn-primary" id="benchStartBtn" style="padding: 12px 32px; font-size: 1rem; letter-spacing: 0.02em;">
+                        Start Benchmark
+                    </button>
+                </div>
+            </div>
+
+            <!-- Active Benchmark Progress Indicator -->
+            <div id="benchProgressSection" style="display: none; margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.08);">
+                <div style="display: flex; justify-content: space-between; font-size: 0.88rem; margin-bottom: 8px;">
+                    <span style="color: var(--accent-primary); font-weight: 500;" id="benchStatusText">Recording PresentMon frame telemetry...</span>
+                    <span id="benchCountdownText" style="color: var(--text-on-dark); font-family: monospace;">0 / 30s</span>
+                </div>
+                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.06); border-radius: 9999px; overflow: hidden;">
+                    <div id="benchProgressBar" style="width: 0%; height: 100%; background: var(--accent-primary); transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benchmark Results Card (Shown after run or on history select) -->
+        <div id="benchResultsCard" class="card-dark" style="margin-bottom: 32px; display: none;">
+            <div class="card-header-clean" style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 18px; margin-bottom: 24px;">
+                <div>
+                    <h2 style="font-size: 1.4rem; font-weight: 600; color: var(--text-on-dark);" id="reportAppTitle">Benchmark Results</h2>
+                    <p style="font-size: 0.85rem; color: var(--text-on-dark-muted); margin-top: 4px;" id="reportMetaText">Recorded run summary</p>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn btn-ghost" id="exportBenchBtn" style="font-size: 0.84rem;">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="margin-right: 6px;">
+                            <path d="M8 2v8m0 0l-3-3m3 3l3-3M3 13h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Export JSON
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Metric Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin-bottom: 32px;">
+                <div class="card-dark" style="background: rgba(255,255,255,0.02); padding: 18px; border-color: rgba(255,255,255,0.05);">
+                    <div style="font-size: 0.8rem; color: var(--text-on-dark-muted); text-transform: uppercase; letter-spacing: 0.05em;">Average FPS</div>
+                    <div style="font-size: 2.4rem; font-weight: 700; color: var(--text-on-dark); margin-top: 4px;" id="resAvgFps">—</div>
+                    <div style="font-size: 0.78rem; color: var(--status-normal);">Overall Mean Framerate</div>
+                </div>
+
+                <div class="card-dark" style="background: rgba(255,255,255,0.02); padding: 18px; border-color: rgba(255,255,255,0.05);">
+                    <div style="font-size: 0.8rem; color: var(--text-on-dark-muted); text-transform: uppercase; letter-spacing: 0.05em;">1% Low FPS</div>
+                    <div style="font-size: 2.4rem; font-weight: 700; color: #f5b942; margin-top: 4px;" id="resLow1Fps">—</div>
+                    <div style="font-size: 0.78rem; color: var(--text-on-dark-muted);">99th Percentile Frametime</div>
+                </div>
+
+                <div class="card-dark" style="background: rgba(255,255,255,0.02); padding: 18px; border-color: rgba(255,255,255,0.05);">
+                    <div style="font-size: 0.8rem; color: var(--text-on-dark-muted); text-transform: uppercase; letter-spacing: 0.05em;">0.1% Low FPS</div>
+                    <div style="font-size: 2.4rem; font-weight: 700; color: var(--status-critical); margin-top: 4px;" id="resLow01Fps">—</div>
+                    <div style="font-size: 0.78rem; color: var(--text-on-dark-muted);">Microstutter Severity Index</div>
+                </div>
+
+                <div class="card-dark" style="background: rgba(255,255,255,0.02); padding: 18px; border-color: rgba(255,255,255,0.05);">
+                    <div style="font-size: 0.8rem; color: var(--text-on-dark-muted); text-transform: uppercase; letter-spacing: 0.05em;">Total Frames Captured</div>
+                    <div style="font-size: 2.4rem; font-weight: 700; color: #a5b4fc; margin-top: 4px;" id="resTotalFrames">—</div>
+                    <div style="font-size: 0.78rem; color: var(--text-on-dark-muted);" id="resDurationFmt">— s run</div>
+                </div>
+            </div>
+
+            <!-- Frame-Time Continuity Graph -->
+            <div style="margin-bottom: 32px;">
+                <div class="card-header-clean">
+                    <div>
+                        <h3 style="font-size: 1.1rem; color: var(--text-on-dark);">Frame-Time Delivery (ms)</h3>
+                        <p style="font-size: 0.82rem; color: var(--text-on-dark-muted);">Lower and flatter line indicates stutter-free presentation consistency (16.6ms = 60 FPS, 6.9ms = 144 FPS).</p>
+                    </div>
+                </div>
+                <div style="height: 260px; width: 100%; margin-top: 12px;">
+                    <canvas id="frametimeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Synchronized Hardware Correlation Graph -->
+            <div>
+                <div class="card-header-clean">
+                    <div>
+                        <h3 style="font-size: 1.1rem; color: var(--text-on-dark);">Synchronized Hardware Load &amp; Thermals</h3>
+                        <p style="font-size: 0.82rem; color: var(--text-on-dark-muted);">Correlates CPU, GPU utilization and temperature curves during the exact benchmark window.</p>
+                    </div>
+                </div>
+                <div style="height: 260px; width: 100%; margin-top: 12px;">
+                    <canvas id="hwCorrelationChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benchmark History Runs -->
+        <div class="card-dark">
+            <div class="card-header-clean">
+                <div>
+                    <h3>Saved Benchmark History</h3>
+                    <span class="eyebrow-label">SQLite Persistence</span>
+                </div>
+                <span style="font-size: 0.84rem; color: var(--text-on-dark-muted);" id="historyCountText">0 runs stored</span>
+            </div>
+
+            <div style="overflow-x: auto; margin-top: 16px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.08); text-align: left; color: var(--text-on-dark-muted);">
+                            <th style="padding: 10px 14px;">Date &amp; Time</th>
+                            <th style="padding: 10px 14px;">Application</th>
+                            <th style="padding: 10px 14px;">Duration</th>
+                            <th style="padding: 10px 14px;">Avg FPS</th>
+                            <th style="padding: 10px 14px;">1% Low</th>
+                            <th style="padding: 10px 14px;">0.1% Low</th>
+                            <th style="padding: 10px 14px; text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="benchHistoryTableBody">
+                        <tr>
+                            <td colspan="7" style="padding: 24px; text-align: center; color: var(--text-on-dark-muted);">
+                                No benchmark runs recorded yet. Click "Start Benchmark" above to capture a run.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/benchmark.js') }}"></script>
+{% endblock %}

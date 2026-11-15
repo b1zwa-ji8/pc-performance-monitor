@@ -1,34 +1,33 @@
 /**
- * Chart.js wrapper utilities.
- * Creates and manages reusable chart instances.
+ * Chart.js wrapper utilities — Melius Design System
+ * Creates and manages reusable chart instances with design token styling.
  */
 
-// Default chart configuration
 const defaultChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    animation: { duration: 300 },
+    animation: { duration: 250 },
     interaction: { mode: 'index', intersect: false },
     plugins: {
         legend: { display: false },
         tooltip: {
-            backgroundColor: 'rgba(30, 33, 48, 0.95)',
-            titleColor: '#e8eaf0',
-            bodyColor: '#8b8fa3',
-            borderColor: 'rgba(255,255,255,0.1)',
+            backgroundColor: 'rgba(20, 20, 22, 0.95)',
+            titleColor: '#f5f5f3',
+            bodyColor: '#9a9a9e',
+            borderColor: 'rgba(255, 255, 255, 0.08)',
             borderWidth: 1,
-            cornerRadius: 8,
-            padding: 10,
-            titleFont: { family: 'Inter', weight: '600' },
-            bodyFont: { family: 'Inter' },
+            cornerRadius: 10,
+            padding: 12,
+            titleFont: { family: 'Inter', weight: '600', size: 12 },
+            bodyFont: { family: 'Inter', size: 12 },
         },
     },
     scales: {
         x: {
             display: true,
-            grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
+            grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
             ticks: {
-                color: '#8b8fa3',
+                color: '#9a9a9e',
                 font: { family: 'Inter', size: 10 },
                 maxTicksLimit: 8,
                 maxRotation: 0,
@@ -36,9 +35,9 @@ const defaultChartOptions = {
         },
         y: {
             display: true,
-            grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false },
+            grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false },
             ticks: {
-                color: '#8b8fa3',
+                color: '#9a9a9e',
                 font: { family: 'Inter', size: 10 },
             },
             min: 0,
@@ -46,14 +45,11 @@ const defaultChartOptions = {
     },
 };
 
-/**
- * Create a real-time line chart.
- */
 function createLineChart(canvasId, options = {}) {
     const ctx = document.getElementById(canvasId)?.getContext('2d');
-    if (!ctx) return null;
+    if (!ctx || typeof Chart === 'undefined') return null;
 
-    const color = options.color || '#5b8def';
+    const color = options.color || '#e8442c';
     const maxVal = options.max !== undefined ? options.max : 100;
     const label = options.label || 'Usage';
     const showLegend = options.showLegend || false;
@@ -65,7 +61,7 @@ function createLineChart(canvasId, options = {}) {
         borderColor: color,
         backgroundColor: hexToRgba(color, 0.08),
         fill: true,
-        tension: 0.4,
+        tension: 0.35,
         borderWidth: 2,
         pointRadius: 0,
         pointHoverRadius: 4,
@@ -78,7 +74,7 @@ function createLineChart(canvasId, options = {}) {
             ...defaultChartOptions,
             plugins: {
                 ...defaultChartOptions.plugins,
-                legend: { display: showLegend, labels: { color: '#8b8fa3', font: { family: 'Inter', size: 11 } } },
+                legend: { display: showLegend, labels: { color: '#9a9a9e', font: { family: 'Inter', size: 11 } } },
             },
             scales: {
                 ...defaultChartOptions.scales,
@@ -97,12 +93,9 @@ function createLineChart(canvasId, options = {}) {
     return new Chart(ctx, config);
 }
 
-/**
- * Create a doughnut chart.
- */
 function createDoughnutChart(canvasId, options = {}) {
     const ctx = document.getElementById(canvasId)?.getContext('2d');
-    if (!ctx) return null;
+    if (!ctx || typeof Chart === 'undefined') return null;
 
     return new Chart(ctx, {
         type: 'doughnut',
@@ -110,9 +103,9 @@ function createDoughnutChart(canvasId, options = {}) {
             labels: options.labels || ['Used', 'Free'],
             datasets: [{
                 data: options.data || [0, 100],
-                backgroundColor: options.colors || ['#5b8def', 'rgba(255,255,255,0.06)'],
+                backgroundColor: options.colors || ['#e8442c', 'rgba(255,255,255,0.06)'],
                 borderWidth: 0,
-                cutout: '75%',
+                cutout: '72%',
             }],
         },
         options: {
@@ -122,7 +115,7 @@ function createDoughnutChart(canvasId, options = {}) {
                 legend: {
                     display: true,
                     position: 'bottom',
-                    labels: { color: '#8b8fa3', font: { family: 'Inter', size: 11 }, padding: 16 },
+                    labels: { color: '#9a9a9e', font: { family: 'Inter', size: 11 }, padding: 16 },
                 },
                 tooltip: defaultChartOptions.plugins.tooltip,
             },
@@ -130,9 +123,6 @@ function createDoughnutChart(canvasId, options = {}) {
     });
 }
 
-/**
- * Update a line chart with buffer data.
- */
 function updateLineChartFromBuffer(chart, buffer, valueKey = 'value', maxPoints = 60) {
     if (!chart || !buffer) return;
 
@@ -147,9 +137,6 @@ function updateLineChartFromBuffer(chart, buffer, valueKey = 'value', maxPoints 
     chart.update('none');
 }
 
-/**
- * Update a multi-dataset line chart.
- */
 function updateMultiLineChart(chart, buffer, keys, maxPoints = 60) {
     if (!chart || !buffer) return;
 
@@ -168,13 +155,9 @@ function updateMultiLineChart(chart, buffer, keys, maxPoints = 60) {
     chart.update('none');
 }
 
-/**
- * Update chart with historical data.
- */
 function updateHistoryChart(chart, historyData, valueKey, maxPoints = 200) {
     if (!chart || !historyData) return;
 
-    // Downsample if too many points
     let data = historyData;
     if (data.length > maxPoints) {
         const step = Math.ceil(data.length / maxPoints);
@@ -191,9 +174,6 @@ function updateHistoryChart(chart, historyData, valueKey, maxPoints = 200) {
     chart.update('none');
 }
 
-/**
- * Convert hex color to rgba string.
- */
 function hexToRgba(hex, alpha) {
     hex = hex.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16);

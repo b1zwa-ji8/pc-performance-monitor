@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}History — Personal PC Performance Monitor{% endblock %}
+
+{% block content %}
+<div class="dot-grid-bg" style="min-height: calc(100vh - 100px); padding: 48px 32px;">
+    <div style="max-width: 1360px; margin: 0 auto;">
+        <!-- Header -->
+        <div style="margin-bottom: 36px;">
+            <div class="eyebrow-label" style="color: var(--accent-primary); margin-bottom: 8px;">Longitudinal Telemetry</div>
+            <h1 class="serif-display" style="font-size: 3rem; color: var(--text-on-dark);">Performance History</h1>
+            <p style="color: var(--text-on-dark-muted); font-size: 1rem; margin-top: 4px;">
+                Historical hardware metrics stored locally in SQLite database.
+            </p>
+        </div>
+
+        <!-- Controls Card -->
+        <div class="card-dark" style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="eyebrow-label">Metric:</span>
+                        <select id="historyMetric" class="search-input-pill" style="width: 140px; cursor: pointer;">
+                            <option value="cpu">CPU Load</option>
+                            <option value="memory">RAM Usage</option>
+                            <option value="gpu">GPU Compute</option>
+                            <option value="network">Network I/O</option>
+                            <option value="disk">Disk Speed</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="eyebrow-label">Window:</span>
+                        <div class="editorial-pill-row" id="historyRangePills" style="margin-bottom: 0;">
+                            <button class="editorial-pill-btn active" data-range="1h">1 Hour</button>
+                            <button class="editorial-pill-btn" data-range="6h">6 Hours</button>
+                            <button class="editorial-pill-btn" data-range="24h">24 Hours</button>
+                            <button class="editorial-pill-btn" data-range="7d">7 Days</button>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary" id="historyLoad">Load Telemetry</button>
+                </div>
+
+                <div>
+                    <button class="btn btn-ghost" id="historyDelete" style="color: var(--status-critical); border-color: rgba(232,68,44,0.3);">
+                        Purge All History
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Bar -->
+        <div class="card-dark" style="padding: 16px 24px; margin-bottom: 24px;">
+            <div id="historyStats" style="display: flex; gap: 32px; font-size: 0.92rem; color: var(--text-on-dark-muted); flex-wrap: wrap;">
+                <span>Select metric and time range, then click <strong>Load Telemetry</strong>.</span>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="card-dark">
+            <div class="card-header-clean">
+                <h3 id="chartHeading">Historical Telemetry Stream</h3>
+                <span class="eyebrow-label" id="chartMetricLabel">Telemetry</span>
+            </div>
+            <div style="height: 380px; width: 100%;">
+                <canvas id="historyChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    'use strict';
+    let chart = null;
+    let selectedRange = '1h';
+
+    // Range selector pills
+    document.querySelectorAll('#historyRangePills .editorial-pill-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('#historyRangePills .editorial-pill-btn').forEach(b => b.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            selectedRange = e.currentTarget.getAttribute('data-range');
+            loadHistory();
+        });
+    });
+
+    document.getElementById('historyMetric')?.addEventListener('change', loadHistory);
+    document.getElementById('historyLoad')?.addEventListener('click', loadHistory);
+
+    function loadHistory() {
+        const metricEl = document.getElementById('historyMetric');
+        const metric = metricEl ? metricEl.value : 'cpu';
+        const heading = document.getElementById('chartHeading');
+        const label = document.getElementById('chartMetricLabel');
+
+        if (heading) heading.textContent = `${metric.toUpperCase()} Historical Telemetry (${selectedRange})`;
+        if (label) label.textContent = metric.toUpperCase();
+
+        fetch(`/api/history/${metric}?range=${selectedRange}`)
+            .then(r => r.json())
+            .then(json => {
+                if (!json.success || !json.data) return;
+
+                const colMap = {
+                    cpu: 'usage_percent',
+                    memory: 'percent',
+                    gpu: 'load_percent',
+                    network: 'download_speed',
+                    disk: 'read_speed',
+                };
+                const col = colMap[metric] || 'usage_percent';
+                const labels = json.data.map(d => {
+                    const date = new Date(d.timestamp * 1000);
+                    return selectedRange === '7d' || selectedRange === '24h'
+                        ? date.toLocaleDateString([], { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                        : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                });
+
+                const isBytes = ['network', 'disk'].includes(metric);
+                const values = json.data.map(d => {
+                    const v = d[col] || 0;
+                    return isBytes ? v / 1024 : v;
+                });
+                const yUnit = isBytes ? 'KB/s' : '%';
+
+                if (chart) chart.destroy();
+
+                const ctx = document.getElementById('historyChart')?.getContext('2d');
+                if (ctx && typeof Chart !== 'undefined') {
+                    chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: metric.toUpperCase(),
+                                data: values,
+                                borderColor: 'var(--accent-primary)',
+                                backgroundColor: 'rgba(232, 68, 44, 0.08)',
+                                fill: true,
+                                tension: 0.3,
+                                pointRadius: 0,
+                                borderWidth: 2,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: {
+                                    grid: { color: 'rgba(255,255,255,0.05)' },
+                                    ticks: { color: '#9a9a9e', maxTicksLimit: 10 }
+                                },
+                                y: {
+                                    grid: { color: 'rgba(255,255,255,0.05)' },
+                                    ticks: {
+                                        color: '#9a9a9e',
+                                        callback: (v) => `${v.toFixed(0)} ${yUnit}`
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Stats
+                const stats = json.stats || {};
+                const statsEl = document.getElementById('historyStats');
+                if (statsEl) {
+                    const fmtVal = (v) => v !== null && v !== undefined ? (isBytes ? (v / 1024).toFixed(1) + ' KB/s' : v.toFixed(1) + '%') : '—';
+                    statsEl.innerHTML = `
+                        <div>Average: <strong style="color:var(--text-on-dark)">${fmtVal(stats.avg)}</strong></div>
+                        <div>Minimum: <strong style="color:var(--text-on-dark)">${fmtVal(stats.min)}</strong></div>
+                        <div>Maximum: <strong style="color:var(--text-on-dark)">${fmtVal(stats.max)}</strong></div>
+                        <div>Logged Data Points: <strong style="color:var(--text-on-dark)">${json.data.length}</strong></div>
+                    `;
+                }
+            })
+            .catch(() => {});
+    }
+
+    document.getElementById('historyDelete')?.addEventListener('click', () => {
+        if (!confirm('Are you sure you want to permanently delete all historical data?')) return;
+        fetch('/api/history', { method: 'DELETE' })
+            .then(r => r.json())
+            .then(json => {
+                if (json.success) {
+                    if (typeof showToast === 'function') showToast('Performance history cleared', 'success');
+                    if (chart) { chart.destroy(); chart = null; }
+                    document.getElementById('historyStats').innerHTML = '<span>History purged successfully.</span>';
+                }
+            });
+    });
+
+    // Auto load initially
+    loadHistory();
+})();
+</script>
+{% endblock %}

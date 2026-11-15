@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Fan Speed &amp; Thermal Profile — Personal PC Performance Monitor{% endblock %}
+
+{% block content %}
+<div class="dot-grid-bg" style="min-height: calc(100vh - 100px); padding: 48px 32px;">
+    <div style="max-width: 1240px; margin: 0 auto;">
+
+        <!-- Header -->
+        <div style="margin-bottom: 28px;">
+            <div class="eyebrow-label" style="color: var(--accent-primary); margin-bottom: 8px;">Thermal Acoustic Analysis</div>
+            <h1 class="serif-display" style="font-size: 2.8rem; color: var(--text-on-dark);">Fan Speed &amp; Thermal Profile</h1>
+            <p style="color: var(--text-on-dark-muted); font-size: 0.98rem; margin-top: 4px;">
+                Analyze the correlation between cooling RPM and package temperatures across operational workloads.
+            </p>
+        </div>
+
+        <!-- Read-Only Notice Box (Strictly labeled as required) -->
+        <div style="background: rgba(245, 185, 66, 0.08); border: 1px solid rgba(245, 185, 66, 0.25); border-radius: 8px; padding: 14px 20px; margin-bottom: 32px; display: flex; align-items: center; gap: 16px;">
+            <span style="font-size: 1.4rem;">ℹ️</span>
+            <div>
+                <strong style="color: var(--status-warning); font-size: 0.9rem;">Read-Only Monitoring Notice:</strong>
+                <span style="font-size: 0.85rem; color: #e5e5ea; margin-left: 6px;">
+                    Windows does not provide a standard ACPI fan <em>control</em> API without proprietary vendor drivers. This module strictly performs read-only visualization of available sensors and never attempts to modify BIOS fan curves.
+                </span>
+            </div>
+        </div>
+
+        <!-- Key Metrics Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 32px;">
+            <!-- Fan Speed -->
+            <div class="card-dark" style="padding: 24px;">
+                <div style="font-size: 0.82rem; color: var(--text-on-dark-muted); text-transform: uppercase; letter-spacing: 0.05em;">Chassis / GPU Cooling</div>
+                <div style="font-size: 2.2rem; font-weight: 700; color: var(--text-on-dark); margin-top: 8px;" id="fanSpeedHero">
+                    —
+                </div>
+                <div style="font-size: 0.82rem; color: var(--text-on-dark-muted); margin-top: 6px;" id="fanBackendText">
+                    Sensor status: Polling...
+                </div>
+            </div>
+
+            <!-- GPU Temperature -->
+            <div class="card-dark" style="padding: 24px;">
+                <div style="font-size: 0.82rem; color: var(--text-on-dark-muted); text-transform: uppercase; letter-spacing: 0.05em;">GPU Core Temperature</div>
+                <div style="font-size: 2.2rem; font-weight: 700; color: #f5b942; margin-top: 8px;" id="gpuTempHero">
+                    —
+                </div>
+                <div style="font-size: 0.82rem; color: var(--status-normal); margin-top: 6px;" id="gpuTempBackend">
+                    Hardware NVML Direct Sensor
+                </div>
+            </div>
+
+            <!-- CPU Temperature -->
+            <div class="card-dark" style="padding: 24px;">
+                <div style="font-size: 0.82rem; color: var(--text-on-dark-muted); text-transform: uppercase; letter-spacing: 0.05em;">CPU Package Temperature</div>
+                <div style="font-size: 2.2rem; font-weight: 700; color: var(--accent-primary); margin-top: 8px;" id="cpuTempHero">
+                    —
+                </div>
+                <div style="font-size: 0.82rem; color: var(--text-on-dark-muted); margin-top: 6px;" id="cpuTempBackend">
+                    ACPI Thermal Package
+                </div>
+            </div>
+        </div>
+
+        <!-- Correlation Chart -->
+        <div class="card-dark" style="margin-bottom: 32px;">
+            <div class="card-header-clean">
+                <div>
+                    <h3 style="font-size: 1.2rem; color: var(--text-on-dark);">Fan RPM vs. Thermal Load Correlation</h3>
+                    <p style="font-size: 0.84rem; color: var(--text-on-dark-muted); margin-top: 4px;">
+                        Tracks how cooling RPM ramps relative to rising CPU and GPU junction temperatures over time.
+                    </p>
+                </div>
+                <div class="editorial-pill-row" id="fanHistoryTabs" style="margin-bottom: 0;">
+                    <button class="editorial-pill-btn active" data-range="1h">1H</button>
+                    <button class="editorial-pill-btn" data-range="6h">6H</button>
+                    <button class="editorial-pill-btn" data-range="24h">24H</button>
+                </div>
+            </div>
+
+            <div style="height: 320px; width: 100%; margin-top: 16px;">
+                <canvas id="fanCorrelationChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Sensor Details / Status Information -->
+        <div class="card-dark">
+            <div class="card-header-clean">
+                <h3>Cooling Subsystem Diagnostics</h3>
+                <span class="eyebrow-label">Sensor Registry</span>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 14px; font-size: 0.88rem; color: var(--text-on-dark-muted);">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+                    <span style="color: var(--text-on-dark);">NVIDIA NVML Fan Bus</span>
+                    <span id="diagNvmlFan">Querying NVML...</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+                    <span style="color: var(--text-on-dark);">LibreHardwareMonitor WMI Interface</span>
+                    <span id="diagLhmFan">Checked (SensorType='Fan')</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-on-dark);">Standard ACPI Win32_Fan Class</span>
+                    <span id="diagWmiFan">Checked (DesiredSpeed)</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/fans.js') }}"></script>
+{% endblock %}

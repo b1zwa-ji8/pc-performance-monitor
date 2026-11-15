@@ -7,14 +7,26 @@ import psutil
 import os
 
 
+# Critical system processes that must NEVER be terminated
+_CRITICAL_PROCESSES = {
+    'system', 'system idle process', 'registry',
+    'csrss.exe', 'smss.exe', 'lsass.exe', 'services.exe',
+    'wininit.exe', 'winlogon.exe', 'svchost.exe', 'dwm.exe',
+    'conhost.exe', 'fontdrvhost.exe', 'lsaiso.exe',
+    'memory compression', 'secure system',
+}
+
+_CRITICAL_PIDS = {0, 4}
+
+
 def get_processes(sort_by='cpu', search=None, limit=100):
     """Get list of running processes.
-    
+
     Args:
         sort_by: 'cpu', 'memory', 'name', 'pid'.
         search: Filter string for process name.
         limit: Max processes to return.
-    
+
     Returns:
         dict with keys: processes (list), total_count
     """
@@ -71,10 +83,10 @@ def get_processes(sort_by='cpu', search=None, limit=100):
 
 def kill_process(pid):
     """Terminate a process by PID.
-    
+
     Args:
         pid: Process ID to terminate.
-    
+
     Returns:
         dict with success status and message.
     """
@@ -83,15 +95,25 @@ def kill_process(pid):
     except (ValueError, TypeError):
         return {'success': False, 'message': 'Invalid PID'}
 
-    # Safety: don't kill PID 0, 4 (System), or our own process
-    if pid in (0, 4):
-        return {'success': False, 'message': 'Cannot terminate system process'}
+    # Safety: refuse to kill critical system PIDs
+    if pid in _CRITICAL_PIDS:
+        return {'success': False, 'message': 'Cannot terminate system process (PID 0/4)'}
+
+    # Safety: refuse to kill our own process
     if pid == os.getpid():
         return {'success': False, 'message': 'Cannot terminate the monitor application'}
 
     try:
         proc = psutil.Process(pid)
         proc_name = proc.name()
+
+        # Safety: refuse to kill critical system processes by name
+        if proc_name.lower() in _CRITICAL_PROCESSES:
+            return {
+                'success': False,
+                'message': f'Cannot terminate critical system process "{proc_name}"'
+            }
+
         proc.terminate()
 
         # Wait up to 3 seconds for graceful termination
@@ -109,6 +131,6 @@ def kill_process(pid):
     except psutil.NoSuchProcess:
         return {'success': False, 'message': f'Process with PID {pid} not found'}
     except psutil.AccessDenied:
-        return {'success': False, 'message': f'Access denied. Try running as administrator.'}
+        return {'success': False, 'message': 'Access denied. Try running as administrator.'}
     except Exception as e:
         return {'success': False, 'message': f'Error: {str(e)}'}

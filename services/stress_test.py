@@ -10,7 +10,7 @@ import time
 import psutil
 
 from database.db import get_connection
-from monitor.gpu import get_gpu, _nvml_initialized, _pynvml_lib, _nvml_device_handle
+from monitor.gpu import get_gpu, get_gpu_clock_mhz
 from services.settings import load_settings
 
 logger = logging.getLogger('pc_monitor.stress_test')
@@ -42,20 +42,6 @@ def init_stress_db():
         conn.commit()
     except Exception as e:
         logger.error("Failed to init stress_test_history table: %s", e)
-
-
-def get_gpu_clock_mhz():
-    """Query current GPU graphics clock speed in MHz via NVML if active."""
-    try:
-        if _nvml_initialized and _pynvml_lib and _nvml_device_handle:
-            clock = _pynvml_lib.nvmlDeviceGetClockInfo(
-                _nvml_device_handle,
-                _pynvml_lib.NVML_CLOCK_GRAPHICS
-            )
-            return int(clock)
-    except Exception as e:
-        logger.debug("Could not query GPU clock info: %s", e)
-    return None
 
 
 def get_stress_telemetry():

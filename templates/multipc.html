@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Multi-PC Fleet Monitoring — Personal PC Performance Monitor{% endblock %}
+
+{% block content %}
+<div class="dot-grid-bg" style="min-height: calc(100vh - 100px); padding: 48px 32px;">
+    <div style="max-width: 1240px; margin: 0 auto;">
+
+        <!-- Header -->
+        <div style="margin-bottom: 28px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <div class="eyebrow-label" style="color: var(--accent-primary); margin-bottom: 8px;">Zero-Cloud Local LAN Discovery</div>
+                <h1 class="serif-display" style="font-size: 2.8rem; color: var(--text-on-dark);">Multi-PC Fleet Monitoring</h1>
+                <p style="color: var(--text-on-dark-muted); font-size: 0.98rem; margin-top: 4px;">
+                    Monitor multiple workstations and rigs across your local network via mDNS/zeroconf with zero external cloud dependencies.
+                </p>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <span id="roleIndicatorBadge" class="editorial-pill-btn" style="cursor: default; padding: 6px 14px; font-size: 0.8rem;">
+                    Mode: Standalone
+                </span>
+                <button class="btn btn-primary" id="openAddNodeModalBtn" style="font-size: 0.86rem; padding: 8px 18px;">
+                    + Add Node Manually
+                </button>
+            </div>
+        </div>
+
+        <!-- Role Configuration & Passphrase Strip -->
+        <div class="card-dark" style="margin-bottom: 32px; padding: 22px 28px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                <div style="display: flex; align-items: center; gap: 24px; flex-wrap: wrap;">
+                    <div>
+                        <div style="font-size: 0.82rem; color: var(--text-on-dark-muted); margin-bottom: 6px;">Instance Mode</div>
+                        <div class="editorial-pill-row" id="multipcRoleTabs" style="margin-bottom: 0;">
+                            <button class="editorial-pill-btn active" data-role="standalone">Standalone</button>
+                            <button class="editorial-pill-btn" data-role="node">Node Mode (Broadcast)</button>
+                            <button class="editorial-pill-btn" data-role="hub">Hub Mode (Fleet View)</button>
+                        </div>
+                    </div>
+
+                    <div style="border-left: 1px solid rgba(255,255,255,0.08); padding-left: 20px;">
+                        <div style="font-size: 0.82rem; color: var(--text-on-dark-muted); margin-bottom: 6px;">Local LAN Passphrase</div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="password" id="inputPassphrase" value="localpass" class="search-input-pill" style="width: 140px; font-family: monospace;">
+                            <button class="btn btn-ghost" id="savePassphraseBtn" style="font-size: 0.8rem; padding: 6px 12px;">Save</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="font-size: 0.82rem; color: var(--text-on-dark-muted); max-width: 380px; line-height: 1.4;">
+                    <strong style="color: var(--status-normal);">Strictly Local:</strong> Works completely with internet disconnected. Nodes discover each other on local subnet via mDNS (multicast DNS port 5353).
+                </div>
+            </div>
+        </div>
+
+        <!-- Node Grid Container -->
+        <div style="margin-bottom: 32px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+                <h2 style="font-size: 1.3rem; font-weight: 600; color: var(--text-on-dark);">Discovered Machines on LAN</h2>
+                <span id="nodeCountText" style="font-size: 0.84rem; color: var(--text-on-dark-muted);">0 machines connected</span>
+            </div>
+
+            <!-- Grid of Node Cards -->
+            <div id="nodesGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px;">
+                <div class="card-dark" style="grid-column: 1 / -1; padding: 40px 20px; text-align: center; color: var(--text-on-dark-muted);">
+                    Switch to <strong>Hub Mode</strong> above to automatically discover other PC Monitor instances running on this network.
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Node Modal -->
+        <div id="addNodeModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 9999; align-items: center; justify-content: center;">
+            <div class="card-dark" style="width: 420px; max-width: 90vw; padding: 28px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+                <div class="card-header-clean" style="margin-bottom: 20px;">
+                    <h3>Add LAN Node Manually</h3>
+                    <button id="closeAddNodeModal" class="btn btn-ghost" style="padding: 4px 10px;">✕</button>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 16px; font-size: 0.88rem;">
+                    <div>
+                        <label style="display: block; color: var(--text-on-dark-muted); margin-bottom: 6px;">IP Address / Hostname</label>
+                        <input type="text" id="manualNodeIp" placeholder="192.168.1.100" class="search-input-pill" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="display: block; color: var(--text-on-dark-muted); margin-bottom: 6px;">Port</label>
+                        <input type="number" id="manualNodePort" value="5000" class="search-input-pill" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="display: block; color: var(--text-on-dark-muted); margin-bottom: 6px;">Display Name</label>
+                        <input type="text" id="manualNodeName" placeholder="Living Room Rig" class="search-input-pill" style="width: 100%;">
+                    </div>
+                    <div>
+                        <label style="display: block; color: var(--text-on-dark-muted); margin-bottom: 6px;">Passphrase (if different)</label>
+                        <input type="password" id="manualNodePass" placeholder="Leave empty for default" class="search-input-pill" style="width: 100%;">
+                    </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 10px;">
+                        <button class="btn btn-primary" id="saveManualNodeBtn" style="flex: 1;">Connect Node</button>
+                        <button class="btn btn-ghost" id="cancelManualNodeBtn" style="flex: 1;">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/multipc.js') }}"></script>
+{% endblock %}

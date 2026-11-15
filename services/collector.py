@@ -7,7 +7,10 @@ Stores data in SQLite and maintains an in-memory buffer for live charts.
 import time
 import threading
 import json
+import logging
 from collections import deque
+
+logger = logging.getLogger('pc_monitor.collector')
 
 from monitor.cpu import get_cpu
 from monitor.memory import get_memory
@@ -52,6 +55,20 @@ class Collector:
         # Initialize database
         init_db()
 
+        # Run hardware diagnostic self-check on startup
+        try:
+            from services.diagnostics import run_startup_self_check
+            run_startup_self_check()
+        except Exception:
+            pass
+
+        # Start live PresentMon FPS sampler
+        try:
+            from monitor.presentmon import live_fps_monitor
+            live_fps_monitor.start()
+        except Exception:
+            pass
+
         self._running = True
         self._thread = threading.Thread(target=self._collect_loop, daemon=True, name='MetricCollector')
         self._thread.start()
@@ -59,6 +76,11 @@ class Collector:
     def stop(self):
         """Stop the background collection thread."""
         self._running = False
+        try:
+            from monitor.presentmon import live_fps_monitor
+            live_fps_monitor.stop()
+        except Exception:
+            pass
         if self._thread:
             self._thread.join(timeout=5)
 
@@ -128,7 +150,7 @@ class Collector:
 
             except Exception as e:
                 # Don't crash the collector on errors
-                pass
+                logger.debug("Collector loop iteration error: %s", e)
 
             # Sleep in small increments so we can stop quickly
             for _ in range(int(interval * 10)):
@@ -163,11 +185,11 @@ class Collector:
             insert_metric('gpu_history', {
                 'timestamp': timestamp,
                 'gpu_name': gpu.get('name', ''),
-                'load_percent': gpu.get('load', 0),
-                'temperature': gpu.get('temperature', 0),
-                'memory_used': gpu.get('memory_used', 0),
-                'memory_total': gpu.get('memory_total', 0),
-                'memory_percent': gpu.get('memory_percent', 0),
+                'load_percent': gpu.get('load'),
+                'temperature': gpu.get('temperature'),
+                'memory_used': gpu.get('memory_used'),
+                'memory_total': gpu.get('memory_total'),
+                'memory_percent': gpu.get('memory_percent'),
             })
         except Exception:
             pass
@@ -197,6 +219,7 @@ class Collector:
     def _collect_system_info(self):
         """Collect static system information."""
         import platform
+        import psutil
         try:
             self.system_info = {
                 'hostname': platform.node(),
@@ -204,6 +227,7 @@ class Collector:
                 'os_version': platform.version(),
                 'architecture': platform.machine(),
                 'python': platform.python_version(),
+                'cpu_cores': psutil.cpu_count(logical=True) or 8,
             }
         except Exception:
             self.system_info = {}
